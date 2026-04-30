@@ -1,26 +1,17 @@
 ;;; algebras/type_alg.hy — TypeAlgebra: type inference + lift_n checking.
 ;;;
-;;; Walks the AST and returns the inferred type at each node. lift_n_ checks
-;;; that arg types match the function's parameter annotations and raises
-;;; TypeError on mismatch (when strict=True).
-;;;
-;;; Limitations (v0):
-;;;   - object / typing.Any treated as wildcard top
-;;;   - Generics (List[int], Dict[K,V]) compared by origin only — not deep
-;;;   - No polymorphism / type variable unification
-;;;   - Bind returns object (cont's return type unknown)
+;;; Stateless: per-leaf type comes from meta["type"] (baked in by defprim /
+;;; defask at declaration site). lift_n_ checks function annotations and
+;;; raises on mismatch when strict=True.
 
 (import inspect)
 (import typing)
-(import sigil.experimental.effects [AskEff PrimEff DoeffEff])
 
 
 (defn _origin [t]
-  "Strip parametric generics: List[int] -> list, Dict[K,V] -> dict, else t."
   (or (typing.get_origin t) t))
 
 (defn _is-compat [actual expected]
-  "Check that actual <: expected. Conservative; treats Any/object as top."
   (cond
     (or (is expected object) (is expected typing.Any)) True
     (or (is actual   object) (is actual   typing.Any)) True
@@ -30,7 +21,6 @@
       (issubclass (_origin actual) (_origin expected))
       (except [TypeError] False))))
 
-
 (defn _signature [f]
   (try
     (inspect.signature f)
@@ -38,14 +28,11 @@
 
 
 (defclass TypeAlgebra []
-  "Type inference + lift_n checking.
-
-   register-prim / register-ask consume :type kwargs from defprim / defask."
+  "Type inference + lift_n checking. No global state — per-leaf type lives
+   in each Embed node's meta dict."
 
   (defn __init__ [self [strict True]]
-    (setv self.strict strict)
-    (setv self.prim-types {})
-    (setv self.ask-types  {}))
+    (setv self.strict strict))
 
   (defn pure_ [self value]
     (type value))
@@ -56,11 +43,9 @@
       (return object))
     (setv params (list (.values sig.parameters)))
     (when self.strict
-      ;; arg count check (skip *args / **kwargs heuristic — keep simple)
       (when (> (len arg-types) (len params))
         (raise (TypeError
                 f"lift-n: {f} takes {(len params)} args, got {(len arg-types)}")))
-      ;; per-arg compatibility
       (for [#(i actual) (enumerate arg-types)]
         (setv param (get params i))
         (setv expected param.annotation)
@@ -72,28 +57,8 @@
     (setv ret sig.return_annotation)
     (if (is ret inspect.Signature.empty) object ret))
 
-  (defn embed_ [self effect]
-    (cond
-      (isinstance effect AskEff)
-      (.get self.ask-types effect.key object)
-
-      (isinstance effect PrimEff)
-      (.get self.prim-types effect.name object)
-
-      (isinstance effect DoeffEff)
-      ;; Generic doeff effects: no static type info — top.
-      object
-
-      True
-      (raise (TypeError f"TypeAlgebra: unknown effect {(type effect)}"))))
+  (defn embed_ [self effect meta]
+    (.get meta "type" object))
 
   (defn bind_ [self inner-type cont]
-    object)   ; cont's return type cannot be inferred without running it
-
-  (defn register-prim [self name #** kwargs]
-    (when (in "type" kwargs)
-      (setv (get self.prim-types name) (get kwargs "type"))))
-
-  (defn register-ask [self key #** kwargs]
-    (when (in "type" kwargs)
-      (setv (get self.ask-types key) (get kwargs "type")))))
+    object))

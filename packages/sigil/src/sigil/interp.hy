@@ -17,7 +17,7 @@
               (tuple (gfor a ast.args (interp alg a))))
 
     (isinstance ast Embed)
-    (.embed_ alg ast.effect)
+    (.embed_ alg ast.effect ast.meta)
 
     (isinstance ast Bind)
     (.bind_ alg (interp alg ast.inner) ast.cont)

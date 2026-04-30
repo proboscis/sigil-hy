@@ -29,16 +29,19 @@
    cont is opaque — Applicative analyses cap below this node."
   (Bind inner cont))
 
-(defn embed [value]
+(defn embed [value [meta None]]
   "Wrap an arbitrary user-domain value as an AST leaf. This is the generic
    Free-Monad embedding constructor — `Embed` carries no effect semantics by
-   itself; algebras decide what to do based on type(value).
+   itself; algebras decide what to do based on type(value) and read any
+   per-leaf annotations from `meta`.
 
-   For example, users may define their own leaf type:
-     (defclass [(dataclass :frozen True)] FetchPrice []
-       (annotate symbol str))
-     (embed (FetchPrice \"BTC\"))   ; → Embed(FetchPrice('BTC'))"
-  (Embed value))
+   meta is an optional dict of analysis-specific annotations (cost, type,
+   provenance, impl, ...). Algebras pick keys they care about; unrecognised
+   keys are ignored.
+
+     (embed (FetchPrice \"BTC\"))
+     (embed (FetchPrice \"BTC\") :meta {\"cost\" 100 \"type\" Float})"
+  (Embed value (dict (or meta {}))))
 
 (defn list-of [#* items]
   "AST node that, when interpreted, yields list of item values."

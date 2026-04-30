@@ -1,9 +1,7 @@
 ;;; algebras/execution.hy — convert apm AST into a doeff Program for run.
 ;;;
-;;; PrimEff resolution: each ExecutionAlgebra carries an `impls` dict keyed
-;;; by primitive name. (defprim name :impl fn) populates this via the
-;;; register-prim hook. At run time, eff_ for a PrimEff calls the registered
-;;; impl with the literal args (which were captured at AST construction).
+;;; Stateless w.r.t. registry. PrimEff impls come from the AST node's
+;;; meta['impl'] (set by defprim :impl fn at declaration site).
 
 (import doeff [Ask Pure])
 (import doeff [do :as _doeff-do])
@@ -11,13 +9,7 @@
 
 
 (defclass ExecutionAlgebra []
-  "Build a doeff Program from the AST. Monad impl for run-sigil.
-
-   Pass `impls` at construction OR (more commonly) register the algebra and
-   use defprim :impl fn to populate it incrementally."
-
-  (defn __init__ [self [impls None]]
-    (setv self.impls (dict (or impls {}))))
+  "Build a doeff Program from the AST. Monad impl for run-apm."
 
   (defn pure_ [self value]
     (Pure value))
@@ -28,23 +20,22 @@
       (for [p progs]
         (setv v (yield p))
         (.append values v))
-    (return (f #* values)))
+      (return (f #* values)))
     ((_doeff-do _gen)))
 
-  (defn embed_ [self effect]
+  (defn embed_ [self effect meta]
     (cond
       (isinstance effect AskEff)
       (Ask effect.key)
 
       (isinstance effect PrimEff)
       (do
-        (when (not (in effect.name self.impls))
+        (when (not (in "impl" meta))
           (raise (ValueError
-                  f"ExecutionAlgebra: no impl for primitive '{effect.name}'. Register via (defprim {effect.name} :impl fn).")))
-        (Pure ((get self.impls effect.name) #* effect.args)))
+                  f"ExecutionAlgebra: no :impl in meta for '{effect.name}'. Use (defprim {effect.name} :impl fn).")))
+        (Pure ((get meta "impl") #* effect.args)))
 
       (isinstance effect DoeffEff)
-      ;; Forward verbatim — caller must install the appropriate doeff handler.
       effect.effect
 
       True
@@ -57,11 +48,4 @@
       (setv next-prog (interp self (cont v)))
       (setv result (yield next-prog))
       (return result))
-    ((_doeff-do _gen)))
-
-  (defn register-prim [self name #** kwargs]
-    "Pick up :impl from defprim declarations."
-    (when (in "impl" kwargs)
-      (setv (get self.impls name) (get kwargs "impl"))))
-
-  (defn register-ask [self key #** kwargs] None))
+    ((_doeff-do _gen))))

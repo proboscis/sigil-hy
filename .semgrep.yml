@@ -1,0 +1,45 @@
+rules:
+  # ─────────────────────────────────────────────────────────────────
+  # Core invariant: sigil core (packages/sigil) must not import any
+  # symbol from sigil.experimental or any other extension package.
+  #
+  # Rationale:
+  #   Core is the leaf-agnostic applicative+monad/effect SYNTAX
+  #   abstraction. It carries no algebra impls, no runtime state, no
+  #   registry. Importing experimental flips the dependency direction
+  #   and re-introduces coupling we deliberately removed.
+  # ─────────────────────────────────────────────────────────────────
+  - id: core-no-experimental
+    message: >-
+      sigil core (packages/sigil) must not import sigil.experimental.
+      Core is pure syntax abstraction; experimental is one example
+      domain. Move the offending code into sigil.experimental or invert
+      the dependency.
+    languages: [generic]
+    severity: ERROR
+    paths:
+      include:
+        - "packages/sigil/src/**"
+    pattern-either:
+      - pattern-regex: 'from\s+sigil\.experimental'
+      - pattern-regex: 'import\s+sigil\.experimental'
+      - pattern-regex: '\(import\s+sigil\.experimental'
+      - pattern-regex: '\(require\s+sigil\.experimental'
+
+  # ─────────────────────────────────────────────────────────────────
+  # Core invariant: sigil core must not import doeff or
+  # doeff_core_effects — those are runtime concerns, not syntax.
+  # ─────────────────────────────────────────────────────────────────
+  - id: core-no-doeff
+    message: >-
+      sigil core must not depend on doeff. Doeff bridge belongs in
+      sigil.experimental (or another extension package).
+    languages: [generic]
+    severity: ERROR
+    paths:
+      include:
+        - "packages/sigil/src/**"
+    pattern-either:
+      - pattern-regex: 'from\s+doeff(_core_effects)?(\.|\s)'
+      - pattern-regex: 'import\s+doeff(_core_effects)?(\.|\s|$)'
+      - pattern-regex: '\(import\s+doeff(-core-effects)?(\.|\s|\])'

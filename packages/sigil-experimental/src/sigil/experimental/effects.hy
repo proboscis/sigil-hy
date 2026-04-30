@@ -1,13 +1,14 @@
 ;;; effects.hy — STANDARD LIBRARY of leaf types and their constructors.
 ;;;
-;;; NOT core. These dataclasses + constructors are example domain types that
-;;; the bundled algebras (Deps / Cost / Type / Execution / Identity)
-;;; recognise. They are not intrinsic to the applicative + monad abstraction
-;;; — users may define their own leaf types (e.g. FetchPrice, RunQuery) and
-;;; either subclass these algebras or write fresh ones.
+;;; NOT core. These dataclasses + constructors are example domain types
+;;; that the bundled algebras (Deps / Cost / Type / Execution / Identity)
+;;; recognise via meta. They are not intrinsic to the applicative + monad
+;;; abstraction — users may define their own leaf types and either bake
+;;; their own meta keys or write fresh algebras.
 ;;;
-;;; Core is just (Pure | Lift | Bind | Embed) + the 4-method Algebra protocol.
-;;; What goes inside Embed is a domain choice.
+;;; Core is just (Pure | Lift | Bind | Embed) + the 4-method Algebra
+;;; protocol. What goes inside Embed and what is in `meta` are domain
+;;; choices.
 
 (import dataclasses [dataclass])
 (import sigil.constructors [embed])
@@ -15,43 +16,42 @@
 ;; ── Leaf dataclasses ─────────────────────────────────────────────
 
 (defclass [(dataclass :frozen True)] Effect []
-  "Optional base class, by convention. Not required — algebras dispatch on
-   exact type rather than on this base.")
+  "Optional convention base. Algebras dispatch on leaf via meta keys,
+   not on this class.")
 
 (defclass [(dataclass :frozen True)] AskEff [Effect]
-  "Read a value from the env by key. Bridges to doeff Ask via
-   ExecutionAlgebra; consumed by Deps / Cost / Type / Identity algebras."
   (annotate key str))
 
 (defclass [(dataclass :frozen True)] PrimEff [Effect]
-  "Call a registered pure primitive by name with literal args. Consumed by
-   Cost / Type algebras (annotation lookup) and Execution / Identity
-   (impl lookup)."
   (annotate name str)
   (annotate args tuple))
 
 (defclass [(dataclass :frozen True)] DoeffEff [Effect]
-  "Wraps an arbitrary doeff effect (Slog, Get, Put, Tell, Try, ...) so any
-   doeff effect flows through the apm DSL. ExecutionAlgebra forwards the
-   wrapped effect to doeff verbatim. Other algebras either ignore it
-   (Deps / Cost return defaults) or raise (Identity has no doeff runtime)."
   (annotate effect object))
 
-;; ── Convenience constructors (build on `embed`) ─────────────────────
+;; ── Convenience constructors ─────────────────────────────────────
+;; Each constructor bakes the appropriate analysis-keys into meta so
+;; algebras don't have to dispatch on the leaf type.
 
 (defn ask [key]
-  "Convenience: (embed (AskEff key))."
-  (embed (AskEff key)))
+  "(embed (AskEff key) :meta {'deps' #{key}}) — Ask-flavored leaf."
+  (embed (AskEff key) :meta {"deps" (frozenset [key])}))
 
 (defn prim [name #* args]
-  "Convenience: (embed (PrimEff name (tuple args)))."
+  "(embed (PrimEff name args)) — name-tagged primitive call."
   (embed (PrimEff name (tuple args))))
 
 (defn doeff [doeff-effect]
-  "Wrap any doeff effect (Slog/Get/Put/Tell/Try/...) as an apm leaf, so
-   the full doeff effect set is available from apm DSL.
+  "(embed (DoeffEff effect)) — opaque doeff effect bridge.
 
-   Example:
-     (import doeff-core-effects.effects [Slog])
-     (doeff (Slog \"starting\"))"
-  (embed (DoeffEff doeff-effect)))
+   If the wrapped effect is a doeff Ask, also bake :deps so DepsAlgebra
+   can see through. Other doeff effects stay opaque to analysis."
+  (try
+    (do
+      (import doeff [Ask :as _DoeffAsk])
+      (if (isinstance doeff-effect _DoeffAsk)
+          (embed (DoeffEff doeff-effect)
+                 :meta {"deps" (frozenset [doeff-effect.key])})
+          (embed (DoeffEff doeff-effect))))
+    (except [ImportError]
+      (embed (DoeffEff doeff-effect)))))

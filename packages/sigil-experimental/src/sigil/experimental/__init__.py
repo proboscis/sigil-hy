@@ -1,54 +1,43 @@
 """sigil.experimental — exploratory bundled extensions for sigil-hy.
 
 NOT a stable / canonical stdlib. The conventions here (AskEff/PrimEff/
-DoeffEff leaf types, the doeff bridge via lazy_ask, run-apm semantics,
-control combinators, variant macros) are tentative — we have not agreed
-on the canonical way to combine sigil and doeff. Treat this package as
-an example domain, not a contract.
+DoeffEff leaf types, the doeff bridge, run-apm semantics, control
+combinators, variant macros) are tentative — we have not agreed on the
+canonical way to combine sigil and doeff. Treat this package as an
+example domain, not a contract.
 
-The doeff bridge (ExecutionAlgebra / run-apm / DoeffEff use) is only
-available when ``sigil-experimental-hy[doeff]`` is installed; otherwise
-those names resolve to None.
-
-Users may bypass this package entirely and build their own leaf types
-and algebras directly on the ``sigil`` core.
+No global registry, no mutable state — defprim / defask are pure data
+factories that bake per-leaf annotations into the AST nodes they
+construct (in their `meta` dict). Algebras read those annotations
+directly when interpreting; there is no out-of-band channel.
 """
 import hy.importer  # noqa: F401 — activates .hy import machinery
 
-# Registry mechanism: global active-algebras list + defprim/defask
-# convenience macros. NOT in core because core is pure syntax — the
-# global mutable registry is one specific runtime dispatch choice.
-from sigil.experimental.registry import (
-    register_algebra, unregister_algebra,
-    clear_registry, get_active_algebras,
-)
-
-# General-purpose meta-algebra (leaf-agnostic; lives here because core
-# carries no concrete algebras).
+# Algebras (leaf-agnostic + leaf-aware)
 from sigil.experimental.algebras.product import ProductAlgebra
-
-# Always available (no doeff dependency)
-from sigil.experimental.effects import (
-    Effect, AskEff, PrimEff, DoeffEff,
-    ask, prim, doeff,
-)
 from sigil.experimental.algebras.deps     import DepsAlgebra
 from sigil.experimental.algebras.identity import IdentityAlgebra
 from sigil.experimental.algebras.cost     import CostAlgebra
 from sigil.experimental.algebras.type_alg import TypeAlgebra
+
+# Leaf types + their constructors (defprim / defask are macros — require
+# them via Hy `(require sigil.experimental.macros [defprim defask])`)
+from sigil.experimental.effects import (
+    Effect, AskEff, PrimEff, DoeffEff,
+    ask, prim, doeff,
+)
 from sigil.experimental.control import when_of, if_of, while_of, times_of
 
 # doeff-bridge (optional — None if doeff is not installed)
 try:
     from sigil.experimental.algebras.execution import ExecutionAlgebra
-    from sigil.experimental.run import run_apm, default_exec_algebra
+    from sigil.experimental.run import run_apm
 except ImportError:
     ExecutionAlgebra = None
     run_apm = None
-    default_exec_algebra = None
 
 
-# ── Convenience shortcuts (built on stdlib algebras) ──────────────
+# ── Convenience shortcuts ─────────────────────────────────────────
 
 from sigil import interp as _interp
 

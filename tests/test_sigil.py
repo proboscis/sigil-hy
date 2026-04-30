@@ -312,49 +312,55 @@ def test_product_algebra_one_walk():
         DepsAlgebra,
     )
 
-    cost = CostAlgebra(default_ask=2.0)
+    cost = CostAlgebra(default=2.0)
     prod = ProductAlgebra(deps=DepsAlgebra(), cost=cost)
 
     ast = lift_n(lambda x, y: x + y, ask("x"), ask("y"))
     result = interp(prod, ast)
 
+    # Default cost per Embed is 2.0; two Embed nodes => 4.0
     assert result == {"deps": frozenset({"x", "y"}), "cost": 4.0}
 
 
-def test_defprim_defask_open_kwargs():
-    """defprim and defask forward kwargs to every active algebra; each
-    algebra picks up only the keys it cares about."""
+def test_defprim_defask_bake_meta_into_ast():
+    """defprim / defask are pure data factories: every (NAME ...) call
+    returns an Embed-laden AST node carrying the declared meta. No
+    global registry is involved."""
     import hy  # noqa: F401
-    from sigil import (
-        interp,
-    )
-    from sigil.experimental import register_algebra, clear_registry, get_active_algebras
-    from sigil.experimental import ProductAlgebra
-    from sigil.experimental import (
-        CostAlgebra,
-        DepsAlgebra,
-    )
-
-    clear_registry()
-    deps_alg = DepsAlgebra()
-    cost_alg = CostAlgebra()
-    register_algebra(deps_alg)
-    register_algebra(cost_alg)
-    assert len(get_active_algebras()) == 2
+    from sigil import interp
+    from sigil.experimental import CostAlgebra, DepsAlgebra
 
     src = """
-(require sigil.experimental.registry [defprim defask])
-
+(require sigil.experimental.macros [defprim defask])
 (defprim fetch-news :cost 100 :provenance "polygon-v2")
 (defprim score-symbol :cost 5)
 (defask threshold :cost 0.5)
 """
-    hy.eval(hy.models.Expression([hy.models.Symbol("do"), *hy.read_many(src)]))
+    mod_ns: dict = {"__builtins__": __builtins__, "__name__": "__sigil_test__"}
+    hy.eval(
+        hy.models.Expression([hy.models.Symbol("do"), *hy.read_many(src)]),
+        mod_ns,
+    )
+    fetch_news = mod_ns["fetch_news"]
+    score_symbol = mod_ns["score_symbol"]
+    threshold = mod_ns["threshold"]
 
-    # CostAlgebra picked up :cost on each declaration
-    assert cost_alg.prim_costs == {"fetch-news": 100, "score-symbol": 5}
-    assert cost_alg.ask_costs == {"threshold": 0.5}
-    # :provenance was forwarded but no algebra in the registry cared
+    # Each (NAME ...) call returns an Embed node with meta baked in
+    fn_ast = fetch_news("BTC")
+    assert fn_ast.meta == {"cost": 100, "provenance": "polygon-v2"}
+    assert score_symbol("X").meta == {"cost": 5}
+    assert threshold.meta == {"cost": 0.5, "deps": frozenset({"threshold"})}
+
+    # CostAlgebra reads cost directly from each Embed's meta
+    pipeline = lift_n(
+        lambda a, b, c: (a, b, c),
+        fetch_news("BTC"),
+        score_symbol("X"),
+        threshold,
+    )
+    assert interp(CostAlgebra(), pipeline) == 100 + 5 + 0.5
+    # DepsAlgebra reads deps directly (only threshold has any)
+    assert interp(DepsAlgebra(), pipeline) == frozenset({"threshold"})
 
 
 def test_type_algebra_infers_return_type():
@@ -383,35 +389,28 @@ def test_type_algebra_raises_on_mismatch():
         interp(TypeAlgebra(), ast)
 
 
-def test_type_algebra_pulls_types_from_defprim_defask():
-    """defprim :type and defask :type populate TypeAlgebra's tables."""
+def test_type_algebra_reads_meta_from_defprim_defask():
+    """TypeAlgebra reads :type from each Embed's meta dict — no registry."""
     import hy  # noqa: F401
-    from sigil import (
-        interp,
-    )
-    from sigil.experimental import register_algebra, clear_registry
-    from sigil.experimental import (
-        TypeAlgebra,
-        prim,
-    )
-
-    clear_registry()
-    talg = TypeAlgebra()
-    register_algebra(talg)
+    from sigil import interp
+    from sigil.experimental import TypeAlgebra
 
     src = """
-(require sigil.experimental.registry [defprim defask])
+(require sigil.experimental.macros [defprim defask])
 (defprim fetch-news :type list)
 (defask threshold :type float)
 """
-    hy.eval(hy.models.Expression([hy.models.Symbol("do"), *hy.read_many(src)]))
+    mod_ns: dict = {"__builtins__": __builtins__, "__name__": "__sigil_test__"}
+    hy.eval(
+        hy.models.Expression([hy.models.Symbol("do"), *hy.read_many(src)]),
+        mod_ns,
+    )
+    fetch_news = mod_ns["fetch_news"]
+    threshold = mod_ns["threshold"]
 
-    assert talg.prim_types == {"fetch-news": list}
-    assert talg.ask_types == {"threshold": float}
-
-    # Use them in an AST and verify the inferred result type
-    assert interp(talg, ask("threshold")) is float
-    assert interp(talg, prim("fetch-news", "BTC")) is list
+    talg = TypeAlgebra()
+    assert interp(talg, threshold) is float
+    assert interp(talg, fetch_news("BTC")) is list
 
 
 def test_type_algebra_strict_off_only_infers():
@@ -480,70 +479,49 @@ def test_defapmk_checked_variant_runs_arbitrary_algebras():
         mod.safe_mul(pure("oops"), pure(3.0))
 
 
-def test_prim_eff_executes_via_registered_impl():
-    """defprim :impl populates ExecutionAlgebra; AST with PrimEff runs."""
+def test_prim_eff_executes_via_meta_impl():
+    """defprim :impl bakes the impl into each AST node's meta;
+    ExecutionAlgebra reads it directly when interpreting."""
     import hy  # noqa: F401
-    from sigil.experimental import register_algebra, clear_registry
-    from sigil.experimental import (
-        prim,
-        default_exec_algebra,
-    )
-
-    clear_registry()
-    register_algebra(default_exec_algebra)
-    default_exec_algebra.impls.clear()
 
     src = """
-(require sigil.experimental.registry [defprim])
+(require sigil.experimental.macros [defprim])
 (defprim sym-len :impl len)
 (defprim concat :impl (fn [#* xs] (.join "" xs)))
 """
-    hy.eval(hy.models.Expression([hy.models.Symbol("do"), *hy.read_many(src)]))
+    mod_ns: dict = {"__builtins__": __builtins__, "__name__": "__sigil_test__"}
+    hy.eval(
+        hy.models.Expression([hy.models.Symbol("do"), *hy.read_many(src)]),
+        mod_ns,
+    )
+    sym_len = mod_ns["sym_len"]
+    concat = mod_ns["concat"]
 
-    # PrimEff with literal args resolves through the registered impl
-    assert run_apm(prim("sym-len", "BTCUSDT")) == 7
-    assert run_apm(prim("concat", "a", "b", "c")) == "abc"
-
-    # Compose with lift_n: feed prim-result into another function
-    ast = lift_n(lambda n: n * 2, prim("sym-len", "ETHUSDT"))
+    assert run_apm(sym_len("BTCUSDT")) == 7
+    assert run_apm(concat("a", "b", "c")) == "abc"
+    ast = lift_n(lambda n: n * 2, sym_len("ETHUSDT"))
     assert run_apm(ast) == 14
 
 
-def test_prim_eff_unknown_raises():
-    """PrimEff without registered impl raises a clear error at execution."""
-    from sigil.experimental import register_algebra, clear_registry
-    from sigil.experimental import (
-        prim,
-        default_exec_algebra,
-    )
+def test_prim_eff_without_impl_raises():
+    """A bare prim() with no meta['impl'] raises at execution."""
+    from sigil.experimental import prim
 
-    clear_registry()
-    register_algebra(default_exec_algebra)
-    default_exec_algebra.impls.clear()
-
-    with pytest.raises(ValueError, match="no impl for primitive 'never-defined'"):
+    with pytest.raises(ValueError, match="no :impl in meta"):
         run_apm(prim("never-defined"))
 
 
-def test_prim_eff_isolated_exec_alg_for_test():
-    """Pass a fresh ExecutionAlgebra to run-apm to stub primitives in tests."""
-    from sigil.experimental import register_algebra, clear_registry
-    from sigil.experimental import (
-        ExecutionAlgebra,
-        prim,
-        default_exec_algebra,
+def test_prim_meta_attached_via_embed_constructor():
+    """Users can attach meta directly via embed(value, meta=...) without
+    going through defprim — useful for tests / ad-hoc node construction."""
+    from sigil import embed
+    from sigil.experimental import PrimEff
+
+    ast = embed(
+        PrimEff("fetch-news", ("BTC",)),
+        meta={"impl": lambda sym: f"stub-{sym}"},
     )
-
-    clear_registry()
-    register_algebra(default_exec_algebra)
-
-    # Production exec-alg has no impls
-    default_exec_algebra.impls.clear()
-
-    # Test exec-alg with a stub
-    test_exec = ExecutionAlgebra(impls={"fetch-news": lambda sym: f"stub-news-for-{sym}"})
-
-    assert run_apm(prim("fetch-news", "BTC"), exec_alg=test_exec) == "stub-news-for-BTC"
+    assert run_apm(ast) == "stub-BTC"
 
 
 def test_doeff_state_through_sigil():
@@ -663,7 +641,7 @@ def test_user_defined_leaf_via_generic_eff():
         def lift_n_(self, f, args):
             return f(*args)
 
-        def embed_(self, leaf):
+        def embed_(self, leaf, meta):
             if isinstance(leaf, FetchPrice):
                 return self.prices[leaf.symbol]
             if isinstance(leaf, CurrentTime):
@@ -683,71 +661,44 @@ def test_user_defined_leaf_via_generic_eff():
     assert interp(alg, ast) == "2026-04-30T12:00: 65000.0"
 
 
-def test_extensible_new_algebra_no_core_change():
-    """Adding a brand-new analysis = subclass Algebra, register it. Core
-    (AST / constructors / macros / defprim / interp) is untouched."""
-    from sigil import (
-        Algebra,
-        interp,
-    )
-    from sigil.experimental import register_algebra, clear_registry
-    from sigil.experimental import (
-        AskEff,
-        PrimEff,
-    )
+def test_extensible_new_algebra_reads_meta():
+    """Add a brand-new analysis (Provenance) without touching core or any
+    other extension. The algebra reads its key from each Embed's meta —
+    no leaf-type dispatch, no registry."""
+    import hy  # noqa: F401
+    from sigil import Algebra, interp
 
     class ProvenanceAlgebra(Algebra):
-        def __init__(self):
-            self.prim_prov: dict[str, str] = {}
-
         def pure_(self, value):
             return frozenset()
 
         def lift_n_(self, f, args):
             return frozenset().union(*args)
 
-        def embed_(self, effect):
-            if isinstance(effect, AskEff):
-                return frozenset({f"ask:{effect.key}"})
-            if isinstance(effect, PrimEff):
-                return frozenset({self.prim_prov.get(effect.name, "?")})
-            raise TypeError(effect)
+        def embed_(self, effect, meta):
+            return frozenset(meta.get("provenance", set()))
 
         def bind_(self, inner_data, cont):
             return inner_data
 
-        def register_prim(self, name, **kwargs):
-            if "provenance" in kwargs:
-                self.prim_prov[name] = kwargs["provenance"]
-
-        def register_ask(self, key, **kwargs):
-            return None
-
-    clear_registry()
-    prov = ProvenanceAlgebra()
-    register_algebra(prov)
-
-    import hy  # noqa: F401
     src = """
-(require sigil.experimental.registry [defprim])
-(defprim fetch-news :cost 100 :provenance "polygon-v2")
-(defprim local-cache :provenance "memory")
+(require sigil.experimental.macros [defprim])
+(defprim fetch-news :cost 100 :provenance #{"polygon-v2"})
+(defprim local-cache :provenance #{"memory"})
 """
-    hy.eval(hy.models.Expression([hy.models.Symbol("do"), *hy.read_many(src)]))
-
-    assert prov.prim_prov == {
-        "fetch-news": "polygon-v2",
-        "local-cache": "memory",
-    }
-
-    # Build an AST that uses the registered primitives
-    from sigil.experimental import prim
-    ast = lift_n(
-        lambda a, b, c: (a, b, c),
-        prim("fetch-news", "BTC"),
-        prim("local-cache"),
-        ask("user.session"),
+    mod_ns: dict = {"__builtins__": __builtins__, "__name__": "__sigil_test__"}
+    hy.eval(
+        hy.models.Expression([hy.models.Symbol("do"), *hy.read_many(src)]),
+        mod_ns,
     )
-    assert interp(prov, ast) == frozenset(
-        {"polygon-v2", "memory", "ask:user.session"}
+    fetch_news = mod_ns["fetch_news"]
+    local_cache = mod_ns["local_cache"]
+
+    ast = lift_n(
+        lambda a, b: (a, b),
+        fetch_news("BTC"),
+        local_cache(),
+    )
+    assert interp(ProvenanceAlgebra(), ast) == frozenset(
+        {"polygon-v2", "memory"}
     )
