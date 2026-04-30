@@ -4,7 +4,7 @@
 ;;; dispatched to alg.pure_ / alg.lift_n_ / alg.eff_; Bind threads inner's
 ;;; result through alg.bind_ along with the (still opaque) continuation.
 
-(import apm.ast [Pure Lift Bind Eff])
+(import prism.ast [Pure Lift Bind Eff])
 
 (defn interp [alg ast]
   "Fold ast through alg. Returns whatever alg's carrier type is."

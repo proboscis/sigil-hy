@@ -4,7 +4,7 @@
 ;;; and (defask ... :cost X). Bind returns inf — opaque continuation past
 ;;; the bind cannot be cost-bounded.
 
-(import apm.stdlib.effects [AskEff PrimEff DoeffEff])
+(import prism.stdlib.effects [AskEff PrimEff DoeffEff])
 
 
 (defclass CostAlgebra []

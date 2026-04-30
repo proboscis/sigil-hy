@@ -1,6 +1,6 @@
 ;;; algebras/deps.hy — DepsAlgebra: collect AskEff keys (DepsA Applicative).
 
-(import apm.stdlib.effects [AskEff PrimEff DoeffEff])
+(import prism.stdlib.effects [AskEff PrimEff DoeffEff])
 
 
 (defclass DepsAlgebra []

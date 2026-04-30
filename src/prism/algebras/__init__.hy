@@ -5,7 +5,7 @@
 ;;;   - ProductAlgebra: zip N algebras into one walk (works on any leaves)
 ;;;
 ;;; Leaf-aware bundled algebras (Deps, Cost, Type, Execution, Identity) live
-;;; under apm.stdlib.algebras — they assume AskEff/PrimEff.
+;;; under prism.stdlib.algebras — they assume AskEff/PrimEff.
 
 
 (defclass Algebra []
@@ -41,4 +41,4 @@
   (defn register-ask  [self key  #** kwargs] None))
 
 
-(import apm.algebras.product [ProductAlgebra])
+(import prism.algebras.product [ProductAlgebra])

@@ -8,12 +8,12 @@
 (import doeff-core-effects.handlers [lazy-ask])
 (import doeff-core-effects.scheduler [scheduled])
 
-(import apm.interp              [interp])
-(import apm.stdlib.algebras.deps       [DepsAlgebra])
-(import apm.stdlib.algebras.execution  [ExecutionAlgebra])
-(import apm.registry            [register-algebra])
+(import prism.interp              [interp])
+(import prism.stdlib.algebras.deps       [DepsAlgebra])
+(import prism.stdlib.algebras.execution  [ExecutionAlgebra])
+(import prism.registry            [register-algebra])
 
-;; Default ExecutionAlgebra used by run-apm. Auto-registered so defprim
+;; Default ExecutionAlgebra used by run-prism. Auto-registered so defprim
 ;; :impl declarations populate it through the standard registry hook.
 (setv default-exec-algebra (ExecutionAlgebra))
 (register-algebra default-exec-algebra)

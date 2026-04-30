@@ -1,13 +1,13 @@
 """Tests for apm — Free Applicative over Free Monad DSL.
 
 defapm / defapmk emit AST nodes (Pure / Lift / Bind / Eff). All applicative /
-monad semantics live in interpreters under apm.interp.
+monad semantics live in interpreters under prism.interp.
 """
 import hy  # noqa: F401 — activates Hy import hook
 import pytest
 
-import apm  # noqa: F401 — registers .hyk/.hyp loaders
-from apm import (
+import prism  # noqa: F401 — registers .hyk/.hyp loaders
+from prism import (
     apm_ask,
     apm_dict,
     apm_list,
@@ -100,8 +100,8 @@ def _hy_eval(src: str):
 def test_macro_defapm_constant():
     mod = _hy_eval(
         """
-(require apm.macros [defapm])
-(import apm [apm-ask])
+(require prism.macros [defapm])
+(import prism [apm-ask])
 (defapm threshold (apm-ask "threshold"))
 """
     )
@@ -113,8 +113,8 @@ def test_macro_defapm_constant():
 def test_macro_defapmk_literal():
     mod = _hy_eval(
         """
-(require apm.macros [defapmk])
-(import apm [pure])
+(require prism.macros [defapmk])
+(import prism [pure])
 (defapmk const-42 [] 42)
 """
     )
@@ -127,8 +127,8 @@ def test_macro_defapmk_literal():
 def test_macro_defapmk_list_literal():
     mod = _hy_eval(
         """
-(require apm.macros [defapmk])
-(import apm [apm-ask apm-list pure])
+(require prism.macros [defapmk])
+(import prism [apm-ask apm-list pure])
 (defapmk pair []
   [(apm-ask "x") (apm-ask "y")])
 """
@@ -142,8 +142,8 @@ def test_macro_defapmk_list_literal():
 def test_macro_defapmk_list_mixed():
     mod = _hy_eval(
         """
-(require apm.macros [defapmk])
-(import apm [apm-ask apm-list pure])
+(require prism.macros [defapmk])
+(import prism [apm-ask apm-list pure])
 (defapmk mixed []
   [(apm-ask "a") 99 "lit"])
 """
@@ -156,8 +156,8 @@ def test_macro_defapmk_list_mixed():
 def test_macro_defapmk_dict_literal():
     mod = _hy_eval(
         """
-(require apm.macros [defapmk])
-(import apm [apm-ask apm-dict pure])
+(require prism.macros [defapmk])
+(import prism [apm-ask apm-dict pure])
 (defapmk config []
   {"thr"  (apm-ask "threshold")
    "max"  100
@@ -173,8 +173,8 @@ def test_macro_defapmk_dict_literal():
 def test_macro_defapmk_tuple_literal():
     mod = _hy_eval(
         """
-(require apm.macros [defapmk])
-(import apm [apm-ask apm-tuple pure])
+(require prism.macros [defapmk])
+(import prism [apm-ask apm-tuple pure])
 (defapmk pair-tuple []
   #((apm-ask "p") (apm-ask "q")))
 """
@@ -187,8 +187,8 @@ def test_macro_defapmk_tuple_literal():
 def test_macro_defapmk_set_literal():
     mod = _hy_eval(
         """
-(require apm.macros [defapmk])
-(import apm [apm-ask apm-set pure])
+(require prism.macros [defapmk])
+(import prism [apm-ask apm-set pure])
 (defapmk syms []
   #{(apm-ask "a") (apm-ask "b")})
 """
@@ -201,8 +201,8 @@ def test_macro_defapmk_set_literal():
 def test_macro_defapmk_with_args():
     mod = _hy_eval(
         """
-(require apm.macros [defapm defapmk])
-(import apm [apm-ask lift-n pure])
+(require prism.macros [defapm defapmk])
+(import prism [apm-ask lift-n pure])
 (import operator)
 (defapm thr (apm-ask "thr"))
 (defapmk score [data]
@@ -217,8 +217,8 @@ def test_macro_defapmk_with_args():
 def test_macro_defapmk_nested_structural():
     mod = _hy_eval(
         """
-(require apm.macros [defapmk])
-(import apm [apm-ask apm-list apm-dict pure])
+(require prism.macros [defapmk])
+(import prism [apm-ask apm-list apm-dict pure])
 (defapmk nested []
   {"items" [(apm-ask "a") (apm-ask "b")]
    "count" 2})
@@ -237,7 +237,7 @@ def test_bind_static_deps_capped_below_continuation():
     """Bind's continuation is opaque — deps undercounts post-bind keys."""
     from doeff import UnhandledEffect
 
-    from apm import bind
+    from prism import bind
 
     inner = apm_ask("seed")
     # cont decides at runtime which apm to return — analysis can't see "fork"
@@ -258,7 +258,7 @@ def test_bind_static_deps_capped_below_continuation():
 
 def test_bind_via_identity_eval():
     """Bind threads value through cont in the identity interpreter too."""
-    from apm import bind
+    from prism import bind
 
     node = bind(apm_ask("x"), lambda v: pure(v * 2))
     assert identity_eval(node, env={"x": 5}) == 10
@@ -269,7 +269,7 @@ def test_bind_via_identity_eval():
 
 def test_algebra_interp_basic():
     """interp(alg, ast) folds the AST through alg's four methods."""
-    from apm import (
+    from prism import (
         DepsAlgebra,
         CostAlgebra,
         IdentityAlgebra,
@@ -294,7 +294,7 @@ def test_algebra_interp_basic():
 
 def test_product_algebra_one_walk():
     """ProductAlgebra runs N algebras in one AST traversal."""
-    from apm import (
+    from prism import (
         DepsAlgebra,
         CostAlgebra,
         ProductAlgebra,
@@ -314,7 +314,7 @@ def test_defprim_defask_open_kwargs():
     """defprim and defask forward kwargs to every active algebra; each
     algebra picks up only the keys it cares about."""
     import hy  # noqa: F401
-    from apm import (
+    from prism import (
         CostAlgebra,
         DepsAlgebra,
         ProductAlgebra,
@@ -332,7 +332,7 @@ def test_defprim_defask_open_kwargs():
     assert len(get_active_algebras()) == 2
 
     src = """
-(require apm.registry [defprim defask])
+(require prism.registry [defprim defask])
 
 (defprim fetch-news :cost 100 :provenance "polygon-v2")
 (defprim score-symbol :cost 5)
@@ -348,7 +348,7 @@ def test_defprim_defask_open_kwargs():
 
 def test_type_algebra_infers_return_type():
     """TypeAlgebra reads f's return annotation as the lift_n result type."""
-    from apm import TypeAlgebra, interp
+    from prism import TypeAlgebra, interp
 
     def add(x: int, y: int) -> int:
         return x + y
@@ -360,7 +360,7 @@ def test_type_algebra_infers_return_type():
 def test_type_algebra_raises_on_mismatch():
     """lift_n raises TypeError when an arg type is incompatible with f's
     parameter annotation."""
-    from apm import TypeAlgebra, interp
+    from prism import TypeAlgebra, interp
 
     def expect_str(s: str) -> int:
         return len(s)
@@ -373,7 +373,7 @@ def test_type_algebra_raises_on_mismatch():
 def test_type_algebra_pulls_types_from_defprim_defask():
     """defprim :type and defask :type populate TypeAlgebra's tables."""
     import hy  # noqa: F401
-    from apm import (
+    from prism import (
         TypeAlgebra,
         apm_prim,
         clear_registry,
@@ -386,7 +386,7 @@ def test_type_algebra_pulls_types_from_defprim_defask():
     register_algebra(talg)
 
     src = """
-(require apm.registry [defprim defask])
+(require prism.registry [defprim defask])
 (defprim fetch-news :type list)
 (defask threshold :type float)
 """
@@ -402,7 +402,7 @@ def test_type_algebra_pulls_types_from_defprim_defask():
 
 def test_type_algebra_strict_off_only_infers():
     """strict=False means lift_n won't raise on mismatch — only infer."""
-    from apm import TypeAlgebra, interp
+    from prism import TypeAlgebra, interp
 
     def expect_str(s: str) -> int:
         return len(s)
@@ -416,9 +416,9 @@ def test_defapmk_typed_variant_catches_type_mismatch():
     import hy  # noqa: F401
     mod = _hy_eval(
         """
-(require apm.macros   [defapmk])
-(require apm.stdlib.variants [defapmk-typed])
-(import  apm [pure lift-n])
+(require prism.macros   [defapmk])
+(require prism.stdlib.variants [defapmk-typed])
+(import  prism [pure lift-n])
 
 (defn add-ints [#^ int x #^ int y] (+ x y))
 
@@ -445,9 +445,9 @@ def test_defapmk_checked_variant_runs_arbitrary_algebras():
     import hy  # noqa: F401
     mod = _hy_eval(
         """
-(require apm.macros   [defapmk])
-(require apm.stdlib.variants [defapmk-checked])
-(import  apm [pure lift-n DepsAlgebra TypeAlgebra])
+(require prism.macros   [defapmk])
+(require prism.stdlib.variants [defapmk-checked])
+(import  prism [pure lift-n DepsAlgebra TypeAlgebra])
 
 (defn mul-floats [#^ float x #^ float y] (* x y))
 
@@ -468,7 +468,7 @@ def test_defapmk_checked_variant_runs_arbitrary_algebras():
 def test_prim_eff_executes_via_registered_impl():
     """defprim :impl populates ExecutionAlgebra; AST with PrimEff runs."""
     import hy  # noqa: F401
-    from apm import (
+    from prism import (
         apm_prim,
         clear_registry,
         default_exec_algebra,
@@ -480,7 +480,7 @@ def test_prim_eff_executes_via_registered_impl():
     default_exec_algebra.impls.clear()
 
     src = """
-(require apm.registry [defprim])
+(require prism.registry [defprim])
 (defprim sym-len :impl len)
 (defprim concat :impl (fn [#* xs] (.join "" xs)))
 """
@@ -497,7 +497,7 @@ def test_prim_eff_executes_via_registered_impl():
 
 def test_prim_eff_unknown_raises():
     """PrimEff without registered impl raises a clear error at execution."""
-    from apm import (
+    from prism import (
         apm_prim,
         clear_registry,
         default_exec_algebra,
@@ -514,7 +514,7 @@ def test_prim_eff_unknown_raises():
 
 def test_prim_eff_isolated_exec_alg_for_test():
     """Pass a fresh ExecutionAlgebra to run-apm to stub primitives in tests."""
-    from apm import (
+    from prism import (
         ExecutionAlgebra,
         apm_prim,
         clear_registry,
@@ -536,12 +536,12 @@ def test_prim_eff_isolated_exec_alg_for_test():
 
 def test_doeff_state_through_apm():
     """doeff Get/Put state effects flow through apm via DoeffEff +
-    a state handler passed to run-apm. apm acts as the syntactic frontend
+    a state handler passed to run-prism. apm acts as the syntactic frontend
     while doeff drives execution."""
     from doeff_core_effects.effects import Get, Put
     from doeff_core_effects.handlers import state
 
-    from apm import apm_doeff, bind, pure
+    from prism import apm_doeff, bind, pure
 
     # Read counter, write counter+1, return new value
     ast = bind(
@@ -560,7 +560,7 @@ def test_doeff_eff_in_lift_n():
     from doeff_core_effects.effects import Get
     from doeff_core_effects.handlers import state
 
-    from apm import apm_doeff
+    from prism import apm_doeff
 
     ast = lift_n(
         lambda x, y: x + y,
@@ -578,7 +578,7 @@ def test_apm_while_with_doeff_state():
     from doeff_core_effects.effects import Get, Put
     from doeff_core_effects.handlers import state
 
-    from apm import apm_doeff, apm_while, bind, pure
+    from prism import apm_doeff, apm_while, bind, pure
 
     ast = apm_while(
         bind(apm_doeff(Get("n")), lambda n: pure(n > 0)),
@@ -606,7 +606,7 @@ def test_apm_while_long_loop_does_not_blow_stack():
     from doeff_core_effects.effects import Get, Put
     from doeff_core_effects.handlers import state
 
-    from apm import apm_doeff, apm_while, bind, pure
+    from prism import apm_doeff, apm_while, bind, pure
 
     sys.setrecursionlimit(10000)
     ast = apm_while(
@@ -623,8 +623,8 @@ def test_user_defined_leaf_via_generic_eff():
     own leaf type and write an algebra that interprets it."""
     from dataclasses import dataclass
 
-    from apm import Algebra, Pure, Lift, Bind, Eff, eff
-    from apm import interp, lift_n, pure as apm_pure
+    from prism import Algebra, Pure, Lift, Bind, Eff, eff
+    from prism import interp, lift_n, pure as apm_pure
 
     @dataclass(frozen=True)
     class FetchPrice:
@@ -671,7 +671,7 @@ def test_user_defined_leaf_via_generic_eff():
 def test_extensible_new_algebra_no_core_change():
     """Adding a brand-new analysis = subclass Algebra, register it. Core
     (AST / constructors / macros / defprim / interp) is untouched."""
-    from apm import (
+    from prism import (
         AskEff,
         Algebra,
         PrimEff,
@@ -713,7 +713,7 @@ def test_extensible_new_algebra_no_core_change():
 
     import hy  # noqa: F401
     src = """
-(require apm.registry [defprim])
+(require prism.registry [defprim])
 (defprim fetch-news :cost 100 :provenance "polygon-v2")
 (defprim local-cache :provenance "memory")
 """
@@ -725,7 +725,7 @@ def test_extensible_new_algebra_no_core_change():
     }
 
     # Build an AST that uses the registered primitives
-    from apm import apm_prim
+    from prism import apm_prim
     ast = lift_n(
         lambda a, b, c: (a, b, c),
         apm_prim("fetch-news", "BTC"),

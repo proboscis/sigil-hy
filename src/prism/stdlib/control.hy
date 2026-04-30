@@ -5,7 +5,7 @@
 ;;; the next AST step, so the AST does not grow upfront — the VM consumes
 ;;; Bind nodes one at a time (trampoline).
 
-(import apm.constructors [pure bind])
+(import prism.constructors [pure bind])
 
 
 (defn apm-when [cond-apm body-apm]

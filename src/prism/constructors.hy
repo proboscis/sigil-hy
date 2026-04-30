@@ -2,7 +2,7 @@
 ;;;
 ;;; Leaf-agnostic; no AskEff / PrimEff knowledge. Users requiring those (or
 ;;; their own leaf types) build on `eff` directly. Standard-library leaf
-;;; constructors live in apm.effects (apm-ask / apm-prim).
+;;; constructors live in prism.effects (apm-ask / apm-prim).
 ;;;
 ;;;   pure     : value -> Apm
 ;;;   lift-n   : f, *Apm -> Apm           (n-ary applicative composition)
@@ -12,7 +12,7 @@
 ;;; Pure-applicative sugar for collection literals (no leaf types involved):
 ;;;   apm-list / apm-tuple / apm-set / apm-dict
 
-(import apm.ast [Pure Lift Bind Eff])
+(import prism.ast [Pure Lift Bind Eff])
 
 ;; ── Core (applicative + monad, leaf-agnostic) ────────────────────
 

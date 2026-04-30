@@ -7,11 +7,11 @@
 
 (import doeff [Ask Pure])
 (import doeff [do :as _doeff-do])
-(import apm.stdlib.effects [AskEff PrimEff DoeffEff])
+(import prism.stdlib.effects [AskEff PrimEff DoeffEff])
 
 
 (defclass ExecutionAlgebra []
-  "Build a doeff Program from the AST. Monad impl for run-apm.
+  "Build a doeff Program from the AST. Monad impl for run-prism.
 
    Pass `impls` at construction OR (more commonly) register the algebra and
    use defprim :impl fn to populate it incrementally."
@@ -51,7 +51,7 @@
       (raise (TypeError f"ExecutionAlgebra: unknown effect {(type effect)}"))))
 
   (defn bind_ [self inner-prog cont]
-    (import apm.interp [interp])
+    (import prism.interp [interp])
     (defn _gen []
       (setv v (yield inner-prog))
       (setv next-prog (interp self (cont v)))

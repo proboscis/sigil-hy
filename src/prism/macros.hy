@@ -1,8 +1,8 @@
-;;; apm.macros — defapm / defapmk for the apm DSL.
+;;; prism.macros — defapm / defapmk for the apm DSL.
 ;;;
 ;;; Usage:
-;;;   (require apm.macros [defapm defapmk])
-;;;   (import apm [pure apm-ask apm-list apm-dict
+;;;   (require prism.macros [defapm defapmk])
+;;;   (import prism [pure apm-ask apm-list apm-dict
 ;;;                                  apm-tuple apm-set lift-n run-apm])
 ;;;
 ;;; Body walker (applied recursively to every value position):

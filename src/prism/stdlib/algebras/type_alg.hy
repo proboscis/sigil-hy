@@ -12,7 +12,7 @@
 
 (import inspect)
 (import typing)
-(import apm.stdlib.effects [AskEff PrimEff DoeffEff])
+(import prism.stdlib.effects [AskEff PrimEff DoeffEff])
 
 
 (defn _origin [t]
