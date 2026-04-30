@@ -13,7 +13,7 @@ This package contains only the leaf-agnostic core:
                 + list-of / dict-of / tuple-of / set-of (Lift sugar)
   Macros:       defapm / defapmk + walk-body / extract-clauses
   Interp:       generic (interp alg ast)
-  Algebra:      base class + ProductAlgebra (works on any leaf type)
+  Algebra:      base class (the protocol; no concrete algebras in core)
   Registry:     register-algebra + defprim / defask (kwargs forward)
 
 The exploratory bundled extensions (AskEff/PrimEff/DoeffEff leaf types,
@@ -38,7 +38,7 @@ from sigil.constructors import (
     list_of, dict_of, tuple_of, set_of,
 )
 from sigil.interp import interp
-from sigil.algebras import Algebra, ProductAlgebra
+from sigil.algebra import Algebra
 from sigil.registry import (
     register_algebra, unregister_algebra,
     clear_registry, get_active_algebras,

@@ -1,20 +1,19 @@
-;;; algebras/__init__.hy — CORE Algebra protocol + leaf-agnostic algebras.
+;;; algebra.hy — CORE Algebra protocol (base class only).
 ;;;
-;;; Core means: works for any leaf type the user defines. Specifically:
-;;;   - Algebra: 4-method protocol base class
-;;;   - ProductAlgebra: zip N algebras into one walk (works on any leaves)
-;;;
-;;; Leaf-aware bundled algebras (Deps, Cost, Type, Execution, Identity) live
-;;; under sigil.experimental.algebras — they assume AskEff/PrimEff.
+;;; Core ships only the abstract protocol. Concrete algebras (DepsAlgebra,
+;;; CostAlgebra, ProductAlgebra, ExecutionAlgebra, ...) live in extension
+;;; packages such as sigil-experimental-hy. Core is purely the
+;;; applicative+monad/effect SYNTAX abstraction; any actual computation
+;;; (= an algebra implementation) is the user's choice and lives outside.
 
 
 (defclass Algebra []
-  "Base class. Subclasses must implement pure_, lift_n_, eff_, bind_.
+  "Base class. Subclasses must implement pure_, lift_n_, embed_, bind_.
 
    Required:
      pure_(self, value)            : a -> F a
      lift_n_(self, f, args)        : (b1->...->bn->a, [F b]) -> F a
-     eff_(self, leaf-value)        : leaf -> F a   (algebra dispatches on
+     embed_(self, leaf-value)      : leaf -> F a   (algebra dispatches on
                                                     type(leaf-value))
      bind_(self, inner-data, cont) : (F a, a -> Apm b) -> F b
 
@@ -39,6 +38,3 @@
 
   (defn register-prim [self name #** kwargs] None)
   (defn register-ask  [self key  #** kwargs] None))
-
-
-(import sigil.algebras.product [ProductAlgebra])

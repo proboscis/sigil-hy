@@ -277,9 +277,9 @@ def test_bind_via_identity_eval():
 def test_algebra_interp_basic():
     """interp(alg, ast) folds the AST through alg's four methods."""
     from sigil import (
-        ProductAlgebra,
         interp,
     )
+    from sigil.experimental import ProductAlgebra
     from sigil.experimental import (
         CostAlgebra,
         DepsAlgebra,
@@ -304,9 +304,9 @@ def test_algebra_interp_basic():
 def test_product_algebra_one_walk():
     """ProductAlgebra runs N algebras in one AST traversal."""
     from sigil import (
-        ProductAlgebra,
         interp,
     )
+    from sigil.experimental import ProductAlgebra
     from sigil.experimental import (
         CostAlgebra,
         DepsAlgebra,
@@ -326,12 +326,12 @@ def test_defprim_defask_open_kwargs():
     algebra picks up only the keys it cares about."""
     import hy  # noqa: F401
     from sigil import (
-        ProductAlgebra,
         clear_registry,
         get_active_algebras,
         interp,
         register_algebra,
     )
+    from sigil.experimental import ProductAlgebra
     from sigil.experimental import (
         CostAlgebra,
         DepsAlgebra,

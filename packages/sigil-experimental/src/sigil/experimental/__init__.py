@@ -15,6 +15,10 @@ and algebras directly on the ``sigil`` core.
 """
 import hy.importer  # noqa: F401 — activates .hy import machinery
 
+# General-purpose meta-algebra (leaf-agnostic; lives here because core
+# carries no concrete algebras).
+from sigil.experimental.algebras.product import ProductAlgebra
+
 # Always available (no doeff dependency)
 from sigil.experimental.effects import (
     Effect, AskEff, PrimEff, DoeffEff,
