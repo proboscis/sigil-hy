@@ -72,7 +72,7 @@
     (setv ret sig.return_annotation)
     (if (is ret inspect.Signature.empty) object ret))
 
-  (defn eff_ [self effect]
+  (defn embed_ [self effect]
     (cond
       (isinstance effect AskEff)
       (.get self.ask-types effect.key object)

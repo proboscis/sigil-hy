@@ -1,6 +1,6 @@
 """Tests for sigil + sigil.stdlib — Free Applicative over Free Monad/Effect DSL.
 
-defapm / defapmk emit AST nodes (Pure / Lift / Bind / Eff). Applicative /
+defapm / defapmk emit AST nodes (Pure / Lift / Bind / Embed). Applicative /
 monad/effect semantics live in Algebra implementations.
 """
 import hy  # noqa: F401 — activates Hy import hook
@@ -11,10 +11,10 @@ import sigil.stdlib  # noqa: F401
 
 # ── core ──────────────────────────────────────────────────────────
 from sigil import (
-    apm_dict,
-    apm_list,
-    apm_set,
-    apm_tuple,
+    dict_of,
+    list_of,
+    set_of,
+    tuple_of,
     is_node,
     lift_n,
     pure,
@@ -22,7 +22,7 @@ from sigil import (
 
 # ── stdlib ────────────────────────────────────────────────────────
 from sigil.stdlib import (
-    apm_ask,
+    ask,
     deps,
     identity_eval,
     run_apm,
@@ -40,54 +40,54 @@ def test_pure_node_and_run():
     assert run_apm(a) == 42
 
 
-def test_apm_ask_deps_and_run():
-    a = apm_ask("threshold")
+def test_ask_deps_and_run():
+    a = ask("threshold")
     assert deps(a) == frozenset({"threshold"})
     assert run_apm(a, env={"threshold": 0.5}) == 0.5
     assert identity_eval(a, env={"threshold": 0.5}) == 0.5
 
 
 def test_lift_n_deps_union():
-    a = apm_ask("x")
-    b = apm_ask("y")
+    a = ask("x")
+    b = ask("y")
     combined = lift_n(lambda x, y: x + y, a, b)
     assert deps(combined) == frozenset({"x", "y"})
     assert run_apm(combined, env={"x": 3, "y": 4}) == 7
 
 
-def test_apm_list_mixed():
-    a = apm_ask("a")
-    result = apm_list(a, pure(99), pure("lit"))
+def test_list_of_mixed():
+    a = ask("a")
+    result = list_of(a, pure(99), pure("lit"))
     assert deps(result) == frozenset({"a"})
     assert run_apm(result, env={"a": 1}) == [1, 99, "lit"]
 
 
-def test_apm_dict():
-    a = apm_ask("threshold")
-    result = apm_dict("thr", a, "max", pure(100))
+def test_dict_of():
+    a = ask("threshold")
+    result = dict_of("thr", a, "max", pure(100))
     assert deps(result) == frozenset({"threshold"})
     assert run_apm(result, env={"threshold": 0.5}) == {"thr": 0.5, "max": 100}
 
 
-def test_apm_tuple():
-    a = apm_ask("p")
-    b = apm_ask("q")
-    result = apm_tuple(a, b)
+def test_tuple_of():
+    a = ask("p")
+    b = ask("q")
+    result = tuple_of(a, b)
     assert deps(result) == frozenset({"p", "q"})
     assert run_apm(result, env={"p": 1, "q": 2}) == (1, 2)
 
 
-def test_apm_set():
-    a = apm_ask("a")
-    b = apm_ask("b")
-    result = apm_set(a, b)
+def test_set_of():
+    a = ask("a")
+    b = ask("b")
+    result = set_of(a, b)
     assert deps(result) == frozenset({"a", "b"})
     assert run_apm(result, env={"a": "x", "b": "y"}) == frozenset({"x", "y"})
 
 
-def test_run_apm_strict_rejects_missing_dep():
+def test_run_strict_rejects_missing_dep():
     with pytest.raises(ValueError, match="deps not in env"):
-        run_apm(apm_ask("missing-key"))
+        run_apm(ask("missing-key"))
 
 
 # ── Macros (compiled inline via hy.eval) ───────────────────────────
@@ -108,8 +108,8 @@ def test_macro_defapm_constant():
     mod = _hy_eval(
         """
 (require sigil.macros [defapm])
-(import sigil.stdlib [apm-ask])
-(defapm threshold (apm-ask "threshold"))
+(import sigil.stdlib [ask])
+(defapm threshold (ask "threshold"))
 """
     )
     assert is_node(mod.threshold)
@@ -135,9 +135,9 @@ def test_macro_defapmk_list_literal():
     mod = _hy_eval(
         """
 (require sigil.macros [defapmk])
-(import sigil [apm-list pure]) (import sigil.stdlib [apm-ask])
+(import sigil [list-of pure]) (import sigil.stdlib [ask])
 (defapmk pair []
-  [(apm-ask "x") (apm-ask "y")])
+  [(ask "x") (ask "y")])
 """
     )
     result = mod.pair()
@@ -150,9 +150,9 @@ def test_macro_defapmk_list_mixed():
     mod = _hy_eval(
         """
 (require sigil.macros [defapmk])
-(import sigil [apm-list pure]) (import sigil.stdlib [apm-ask])
+(import sigil [list-of pure]) (import sigil.stdlib [ask])
 (defapmk mixed []
-  [(apm-ask "a") 99 "lit"])
+  [(ask "a") 99 "lit"])
 """
     )
     result = mod.mixed()
@@ -164,9 +164,9 @@ def test_macro_defapmk_dict_literal():
     mod = _hy_eval(
         """
 (require sigil.macros [defapmk])
-(import sigil [apm-dict pure]) (import sigil.stdlib [apm-ask])
+(import sigil [dict-of pure]) (import sigil.stdlib [ask])
 (defapmk config []
-  {"thr"  (apm-ask "threshold")
+  {"thr"  (ask "threshold")
    "max"  100
    "name" "strategy-a"})
 """
@@ -181,9 +181,9 @@ def test_macro_defapmk_tuple_literal():
     mod = _hy_eval(
         """
 (require sigil.macros [defapmk])
-(import sigil [apm-tuple pure]) (import sigil.stdlib [apm-ask])
+(import sigil [tuple-of pure]) (import sigil.stdlib [ask])
 (defapmk pair-tuple []
-  #((apm-ask "p") (apm-ask "q")))
+  #((ask "p") (ask "q")))
 """
     )
     result = mod.pair_tuple()
@@ -195,9 +195,9 @@ def test_macro_defapmk_set_literal():
     mod = _hy_eval(
         """
 (require sigil.macros [defapmk])
-(import sigil [apm-set pure]) (import sigil.stdlib [apm-ask])
+(import sigil [set-of pure]) (import sigil.stdlib [ask])
 (defapmk syms []
-  #{(apm-ask "a") (apm-ask "b")})
+  #{(ask "a") (ask "b")})
 """
     )
     result = mod.syms()
@@ -209,9 +209,9 @@ def test_macro_defapmk_with_args():
     mod = _hy_eval(
         """
 (require sigil.macros [defapm defapmk])
-(import sigil [lift-n pure]) (import sigil.stdlib [apm-ask])
+(import sigil [lift-n pure]) (import sigil.stdlib [ask])
 (import operator)
-(defapm thr (apm-ask "thr"))
+(defapm thr (ask "thr"))
 (defapmk score [data]
   (lift-n operator.mul data thr))
 """
@@ -225,9 +225,9 @@ def test_macro_defapmk_nested_structural():
     mod = _hy_eval(
         """
 (require sigil.macros [defapmk])
-(import sigil [apm-list apm-dict pure]) (import sigil.stdlib [apm-ask])
+(import sigil [list-of dict-of pure]) (import sigil.stdlib [ask])
 (defapmk nested []
-  {"items" [(apm-ask "a") (apm-ask "b")]
+  {"items" [(ask "a") (ask "b")]
    "count" 2})
 """
     )
@@ -246,9 +246,9 @@ def test_bind_static_deps_capped_below_continuation():
 
     from sigil import bind
 
-    inner = apm_ask("seed")
+    inner = ask("seed")
     # cont decides at runtime which apm to return — analysis can't see "fork"
-    cont = lambda v: apm_ask("fork") if v > 0 else pure(0)
+    cont = lambda v: ask("fork") if v > 0 else pure(0)
     node = bind(inner, cont)
 
     # static analysis only sees inner's deps; "fork" stays hidden
@@ -267,7 +267,7 @@ def test_bind_via_identity_eval():
     """Bind threads value through cont in the identity interpreter too."""
     from sigil import bind
 
-    node = bind(apm_ask("x"), lambda v: pure(v * 2))
+    node = bind(ask("x"), lambda v: pure(v * 2))
     assert identity_eval(node, env={"x": 5}) == 10
 
 
@@ -290,7 +290,7 @@ def test_algebra_interp_basic():
     from doeff_core_effects.handlers import lazy_ask
     from doeff_core_effects.scheduler import scheduled
 
-    ast = lift_n(lambda x, y: x + y, apm_ask("x"), apm_ask("y"))
+    ast = lift_n(lambda x, y: x + y, ask("x"), ask("y"))
 
     assert interp(DepsAlgebra(), ast) == frozenset({"x", "y"})
     assert interp(IdentityAlgebra(env={"x": 3, "y": 4}), ast) == 7
@@ -315,7 +315,7 @@ def test_product_algebra_one_walk():
     cost = CostAlgebra(default_ask=2.0)
     prod = ProductAlgebra(deps=DepsAlgebra(), cost=cost)
 
-    ast = lift_n(lambda x, y: x + y, apm_ask("x"), apm_ask("y"))
+    ast = lift_n(lambda x, y: x + y, ask("x"), ask("y"))
     result = interp(prod, ast)
 
     assert result == {"deps": frozenset({"x", "y"}), "cost": 4.0}
@@ -395,7 +395,7 @@ def test_type_algebra_pulls_types_from_defprim_defask():
     )
     from sigil.stdlib import (
         TypeAlgebra,
-        apm_prim,
+        prim,
     )
 
     clear_registry()
@@ -413,8 +413,8 @@ def test_type_algebra_pulls_types_from_defprim_defask():
     assert talg.ask_types == {"threshold": float}
 
     # Use them in an AST and verify the inferred result type
-    assert interp(talg, apm_ask("threshold")) is float
-    assert interp(talg, apm_prim("fetch-news", "BTC")) is list
+    assert interp(talg, ask("threshold")) is float
+    assert interp(talg, prim("fetch-news", "BTC")) is list
 
 
 def test_type_algebra_strict_off_only_infers():
@@ -491,7 +491,7 @@ def test_prim_eff_executes_via_registered_impl():
         register_algebra,
     )
     from sigil.stdlib import (
-        apm_prim,
+        prim,
         default_exec_algebra,
     )
 
@@ -507,11 +507,11 @@ def test_prim_eff_executes_via_registered_impl():
     hy.eval(hy.models.Expression([hy.models.Symbol("do"), *hy.read_many(src)]))
 
     # PrimEff with literal args resolves through the registered impl
-    assert run_apm(apm_prim("sym-len", "BTCUSDT")) == 7
-    assert run_apm(apm_prim("concat", "a", "b", "c")) == "abc"
+    assert run_apm(prim("sym-len", "BTCUSDT")) == 7
+    assert run_apm(prim("concat", "a", "b", "c")) == "abc"
 
     # Compose with lift_n: feed prim-result into another function
-    ast = lift_n(lambda n: n * 2, apm_prim("sym-len", "ETHUSDT"))
+    ast = lift_n(lambda n: n * 2, prim("sym-len", "ETHUSDT"))
     assert run_apm(ast) == 14
 
 
@@ -522,7 +522,7 @@ def test_prim_eff_unknown_raises():
         register_algebra,
     )
     from sigil.stdlib import (
-        apm_prim,
+        prim,
         default_exec_algebra,
     )
 
@@ -531,7 +531,7 @@ def test_prim_eff_unknown_raises():
     default_exec_algebra.impls.clear()
 
     with pytest.raises(ValueError, match="no impl for primitive 'never-defined'"):
-        run_apm(apm_prim("never-defined"))
+        run_apm(prim("never-defined"))
 
 
 def test_prim_eff_isolated_exec_alg_for_test():
@@ -542,7 +542,7 @@ def test_prim_eff_isolated_exec_alg_for_test():
     )
     from sigil.stdlib import (
         ExecutionAlgebra,
-        apm_prim,
+        prim,
         default_exec_algebra,
     )
 
@@ -555,10 +555,10 @@ def test_prim_eff_isolated_exec_alg_for_test():
     # Test exec-alg with a stub
     test_exec = ExecutionAlgebra(impls={"fetch-news": lambda sym: f"stub-news-for-{sym}"})
 
-    assert run_apm(apm_prim("fetch-news", "BTC"), exec_alg=test_exec) == "stub-news-for-BTC"
+    assert run_apm(prim("fetch-news", "BTC"), exec_alg=test_exec) == "stub-news-for-BTC"
 
 
-def test_doeff_state_through_apm():
+def test_doeff_state_through_sigil():
     """doeff Get/Put state effects flow through apm via DoeffEff +
     a state handler passed to run-sigil. apm acts as the syntactic frontend
     while doeff drives execution."""
@@ -566,13 +566,13 @@ def test_doeff_state_through_apm():
     from doeff_core_effects.handlers import state
 
     from sigil import bind, pure
-    from sigil.stdlib import apm_doeff
+    from sigil.stdlib import doeff
 
     # Read counter, write counter+1, return new value
     ast = bind(
-        apm_doeff(Get("counter")),
+        doeff(Get("counter")),
         lambda n: bind(
-            apm_doeff(Put("counter", n + 1)),
+            doeff(Put("counter", n + 1)),
             lambda _: pure(n + 1),
         ),
     )
@@ -585,12 +585,12 @@ def test_doeff_eff_in_lift_n():
     from doeff_core_effects.effects import Get
     from doeff_core_effects.handlers import state
 
-    from sigil.stdlib import apm_doeff
+    from sigil.stdlib import doeff
 
     ast = lift_n(
         lambda x, y: x + y,
-        apm_doeff(Get("a")),
-        apm_doeff(Get("b")),
+        doeff(Get("a")),
+        doeff(Get("b")),
     )
     result = run_apm(
         ast, env={}, handlers=[state(initial={"a": 10, "b": 32})]
@@ -598,27 +598,27 @@ def test_doeff_eff_in_lift_n():
     assert result == 42
 
 
-def test_apm_while_with_doeff_state():
-    """apm-while + doeff state effect: runtime loop, lazy AST via Bind cont."""
+def test_while_of_with_doeff_state():
+    """while-of + doeff state effect: runtime loop, lazy AST via Bind cont."""
     from doeff_core_effects.effects import Get, Put
     from doeff_core_effects.handlers import state
 
     from sigil import bind, pure
-    from sigil.stdlib import apm_doeff, apm_while
+    from sigil.stdlib import doeff, while_of
 
-    ast = apm_while(
-        bind(apm_doeff(Get("n")), lambda n: pure(n > 0)),
-        bind(apm_doeff(Get("n")), lambda n: apm_doeff(Put("n", n - 1))),
+    ast = while_of(
+        bind(doeff(Get("n")), lambda n: pure(n > 0)),
+        bind(doeff(Get("n")), lambda n: doeff(Put("n", n - 1))),
     )
     run_apm(ast, env={}, handlers=[state(initial={"n": 7})])
     # No way to query terminal state without an extra effect; observe via second AST
     final = run_apm(
         bind(
-            apm_while(
-                bind(apm_doeff(Get("k")), lambda k: pure(k > 0)),
-                bind(apm_doeff(Get("k")), lambda k: apm_doeff(Put("k", k - 1))),
+            while_of(
+                bind(doeff(Get("k")), lambda k: pure(k > 0)),
+                bind(doeff(Get("k")), lambda k: doeff(Put("k", k - 1))),
             ),
-            lambda _: apm_doeff(Get("k")),
+            lambda _: doeff(Get("k")),
         ),
         env={},
         handlers=[state(initial={"k": 7})],
@@ -626,31 +626,31 @@ def test_apm_while_with_doeff_state():
     assert final == 0
 
 
-def test_apm_while_long_loop_does_not_blow_stack():
+def test_while_of_long_loop_does_not_blow_stack():
     """5000 iterations finish — doeff VM trampolines Bind/cont steps."""
     import sys
     from doeff_core_effects.effects import Get, Put
     from doeff_core_effects.handlers import state
 
     from sigil import bind, pure
-    from sigil.stdlib import apm_doeff, apm_while
+    from sigil.stdlib import doeff, while_of
 
     sys.setrecursionlimit(10000)
-    ast = apm_while(
-        bind(apm_doeff(Get("n")), lambda n: pure(n > 0)),
-        bind(apm_doeff(Get("n")), lambda n: apm_doeff(Put("n", n - 1))),
+    ast = while_of(
+        bind(doeff(Get("n")), lambda n: pure(n > 0)),
+        bind(doeff(Get("n")), lambda n: doeff(Put("n", n - 1))),
     )
     run_apm(ast, env={}, handlers=[state(initial={"n": 5000})])  # no exception
 
 
 def test_user_defined_leaf_via_generic_eff():
-    """`eff` wraps arbitrary user-domain values; algebras dispatch on type.
+    """`embed` wraps arbitrary user-domain values; algebras dispatch on type.
 
     Demonstrates that AskEff/PrimEff are NOT core — the user can define their
     own leaf type and write an algebra that interprets it."""
     from dataclasses import dataclass
 
-    from sigil import Algebra, Pure, Lift, Bind, Eff, eff
+    from sigil import Algebra, Pure, Lift, Bind, Embed, embed
     from sigil import interp, lift_n, pure as apm_pure
 
     @dataclass(frozen=True)
@@ -675,7 +675,7 @@ def test_user_defined_leaf_via_generic_eff():
         def lift_n_(self, f, args):
             return f(*args)
 
-        def eff_(self, leaf):
+        def embed_(self, leaf):
             if isinstance(leaf, FetchPrice):
                 return self.prices[leaf.symbol]
             if isinstance(leaf, CurrentTime):
@@ -687,8 +687,8 @@ def test_user_defined_leaf_via_generic_eff():
 
     ast = lift_n(
         lambda p, t: f"{t}: {p}",
-        eff(FetchPrice("BTC")),
-        eff(CurrentTime()),
+        embed(FetchPrice("BTC")),
+        embed(CurrentTime()),
     )
 
     alg = MyDomainAlgebra(prices={"BTC": 65000.0}, now="2026-04-30T12:00")
@@ -719,7 +719,7 @@ def test_extensible_new_algebra_no_core_change():
         def lift_n_(self, f, args):
             return frozenset().union(*args)
 
-        def eff_(self, effect):
+        def embed_(self, effect):
             if isinstance(effect, AskEff):
                 return frozenset({f"ask:{effect.key}"})
             if isinstance(effect, PrimEff):
@@ -754,12 +754,12 @@ def test_extensible_new_algebra_no_core_change():
     }
 
     # Build an AST that uses the registered primitives
-    from sigil.stdlib import apm_prim
+    from sigil.stdlib import prim
     ast = lift_n(
         lambda a, b, c: (a, b, c),
-        apm_prim("fetch-news", "BTC"),
-        apm_prim("local-cache"),
-        apm_ask("user.session"),
+        prim("fetch-news", "BTC"),
+        prim("local-cache"),
+        ask("user.session"),
     )
     assert interp(prov, ast) == frozenset(
         {"polygon-v2", "memory", "ask:user.session"}

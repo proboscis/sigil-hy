@@ -31,7 +31,7 @@
     (return (f #* values)))
     ((_doeff-do _gen)))
 
-  (defn eff_ [self effect]
+  (defn embed_ [self effect]
     (cond
       (isinstance effect AskEff)
       (Ask effect.key)

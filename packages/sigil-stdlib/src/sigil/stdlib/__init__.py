@@ -13,13 +13,13 @@ import hy.importer  # noqa: F401 — activates .hy import machinery
 # Always available (no doeff dependency)
 from sigil.stdlib.effects import (
     Effect, AskEff, PrimEff, DoeffEff,
-    apm_ask, apm_prim, apm_doeff,
+    ask, prim, doeff,
 )
 from sigil.stdlib.algebras.deps     import DepsAlgebra
 from sigil.stdlib.algebras.identity import IdentityAlgebra
 from sigil.stdlib.algebras.cost     import CostAlgebra
 from sigil.stdlib.algebras.type_alg import TypeAlgebra
-from sigil.stdlib.control import apm_when, apm_if, apm_while, apm_times
+from sigil.stdlib.control import when_of, if_of, while_of, times_of
 
 # doeff-bridge (optional — None if doeff is not installed)
 try:

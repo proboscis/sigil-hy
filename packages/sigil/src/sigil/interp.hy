@@ -1,10 +1,10 @@
 ;;; interp.hy — generic AST → Algebra interpretation.
 ;;;
-;;; (interp alg ast) folds the AST through an Algebra. Pure / Lift / Eff are
-;;; dispatched to alg.pure_ / alg.lift_n_ / alg.eff_; Bind threads inner's
+;;; (interp alg ast) folds the AST through an Algebra. Pure / Lift / Embed are
+;;; dispatched to alg.pure_ / alg.lift_n_ / alg.embed_; Bind threads inner's
 ;;; result through alg.bind_ along with the (still opaque) continuation.
 
-(import sigil.ast [Pure Lift Bind Eff])
+(import sigil.ast [Pure Lift Bind Embed])
 
 (defn interp [alg ast]
   "Fold ast through alg. Returns whatever alg's carrier type is."
@@ -16,8 +16,8 @@
     (.lift_n_ alg ast.f
               (tuple (gfor a ast.args (interp alg a))))
 
-    (isinstance ast Eff)
-    (.eff_ alg ast.effect)
+    (isinstance ast Embed)
+    (.embed_ alg ast.effect)
 
     (isinstance ast Bind)
     (.bind_ alg (interp alg ast.inner) ast.cont)

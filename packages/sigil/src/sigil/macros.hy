@@ -2,21 +2,21 @@
 ;;;
 ;;; Usage:
 ;;;   (require sigil.macros [defapm defapmk])
-;;;   (import sigil [pure apm-ask apm-list apm-dict
-;;;                                  apm-tuple apm-set lift-n run-apm])
+;;;   (import sigil [pure ask list-of dict-of
+;;;                                  tuple-of set-of lift-n run-apm])
 ;;;
 ;;; Body walker (applied recursively to every value position):
 ;;;   - Numeric / String / Bytes literal -> (pure literal)
 ;;;   - Bool / None (Hy parses as Symbol) -> (pure literal)
-;;;   - List literal  [a b c]   -> (apm-list <a> <b> <c>)
-;;;   - Dict literal  {:k v}    -> (apm-dict :k <v>)         ; keys not walked
-;;;   - Tuple literal #(a b c)  -> (apm-tuple <a> <b> <c>)
-;;;   - Set literal   #{a b}    -> (apm-set <a> <b>)
+;;;   - List literal  [a b c]   -> (list-of <a> <b> <c>)
+;;;   - Dict literal  {:k v}    -> (dict-of :k <v>)         ; keys not walked
+;;;   - Tuple literal #(a b c)  -> (tuple-of <a> <b> <c>)
+;;;   - Set literal   #{a b}    -> (set-of <a> <b>)
 ;;;   - Symbol / Keyword         -> as-is (apm reference or kwarg marker)
 ;;;   - Expression (call)        -> as-is (the call must return Apm)
 ;;;
 ;;; Important: the walker does NOT descend into Expressions. A function call
-;;; like (apm-ask "x") is opaque — its arguments are passed through verbatim.
+;;; like (ask "x") is opaque — its arguments are passed through verbatim.
 ;;; This means raw literals are only auto-pure'd when they appear directly in
 ;;; a value position OR inside a structural literal — never inside another
 ;;; function call.
@@ -48,26 +48,26 @@
     (_is-special-symbol-literal form)
     `(pure ~form)
 
-    ;; list literal -> apm-list of walked items
+    ;; list literal -> list-of of walked items
     (isinstance form hy.models.List)
-    `(apm-list ~@(lfor x form (_walk x)))
+    `(list-of ~@(lfor x form (_walk x)))
 
-    ;; dict literal -> apm-dict of alternating k/v (keys not walked, values walked)
+    ;; dict literal -> dict-of of alternating k/v (keys not walked, values walked)
     (isinstance form hy.models.Dict)
     (do
       (setv flat [])
       (for [#(k v) (zip (cut form None None 2) (cut form 1 None 2))]
         (.append flat k)
         (.append flat (_walk v)))
-      `(apm-dict ~@flat))
+      `(dict-of ~@flat))
 
-    ;; tuple literal -> apm-tuple
+    ;; tuple literal -> tuple-of
     (isinstance form hy.models.Tuple)
-    `(apm-tuple ~@(lfor x form (_walk x)))
+    `(tuple-of ~@(lfor x form (_walk x)))
 
-    ;; set literal -> apm-set
+    ;; set literal -> set-of
     (isinstance form hy.models.Set)
-    `(apm-set ~@(lfor x form (_walk x)))
+    `(set-of ~@(lfor x form (_walk x)))
 
     ;; symbol / keyword / expression / anything else -> as-is
     True
@@ -108,7 +108,7 @@
 (defmacro defapm [name #* body]
   "Define an Apm constant.
 
-  (defapm threshold (apm-ask \"threshold\"))
+  (defapm threshold (ask \"threshold\"))
 
   The body is a single expression that must produce an Apm at runtime."
   (when (= (len body) 0)
@@ -121,8 +121,8 @@
   "Define an Apm Kleisli function (args -> Apm).
 
   Body forms are walked: literals and structural forms are auto-lifted via
-  pure / apm-list / apm-dict / apm-tuple / apm-set. Function calls (including
-  apm-ask, lift-n, defapmk calls) are NOT descended into — pass apm or apm
+  pure / list-of / dict-of / tuple-of / set-of. Function calls (including
+  ask, lift-n, defapmk calls) are NOT descended into — pass apm or apm
   values to them explicitly.
 
   Examples:

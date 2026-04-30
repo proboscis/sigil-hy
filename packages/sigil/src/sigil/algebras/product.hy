@@ -19,8 +19,8 @@
     (dfor [n a] (.items self.algebras)
           n (.lift_n_ a f (tuple (gfor rec arg-records (get rec n))))))
 
-  (defn eff_ [self effect]
-    (dfor [n a] (.items self.algebras) n (.eff_ a effect)))
+  (defn embed_ [self effect]
+    (dfor [n a] (.items self.algebras) n (.embed_ a effect)))
 
   (defn bind_ [self inner-data cont]
     (dfor [n a] (.items self.algebras)

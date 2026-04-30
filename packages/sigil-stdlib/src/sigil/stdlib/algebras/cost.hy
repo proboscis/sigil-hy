@@ -22,7 +22,7 @@
   (defn lift_n_ [self f args]
     (sum args))
 
-  (defn eff_ [self effect]
+  (defn embed_ [self effect]
     (cond
       (isinstance effect AskEff)
       (.get self.ask-costs effect.key self.default-ask)

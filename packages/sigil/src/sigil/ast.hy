@@ -6,14 +6,14 @@
 ;;;   Pure  : value
 ;;;   Lift  : pure n-ary function applied to AST args (Applicative)
 ;;;   Bind  : monadic escape — inner AST + opaque continuation (Monad)
-;;;   Eff   : leaf wrapper around an arbitrary user-domain value
+;;;   Embed   : leaf wrapper around an arbitrary user-domain value
 ;;;
-;;; "Eff" carries NO algebraic-effects semantics by itself — it is the
+;;; "Embed" carries NO algebraic-effects semantics by itself — it is the
 ;;; Free-Monad embedding constructor (literature names: Embed / Inj). The
-;;; choice of what lives inside Eff (AskEff, PrimEff, FetchPrice, ...) is
+;;; choice of what lives inside Embed (AskEff, PrimEff, FetchPrice, ...) is
 ;;; the user's domain decision. Algebras dispatch on the type of node.value.
 ;;;
-;;; Pure | Lift | Eff = the Applicative-only sub-tree (statically analyzable
+;;; Pure | Lift | Embed = the Applicative-only sub-tree (statically analyzable
 ;;; to the leaf). Bind caps analysis: cont is value-dependent and opaque.
 
 (import dataclasses [dataclass])
@@ -29,11 +29,11 @@
   (annotate inner object)           ; AST node
   (annotate cont object))           ; Callable: value -> AST node (opaque)
 
-(defclass [(dataclass :frozen True)] Eff []
+(defclass [(dataclass :frozen True)] Embed []
   (annotate effect object))         ; first-class Effect dataclass
 
 (defn is-node [x]
   (or (isinstance x Pure)
       (isinstance x Lift)
       (isinstance x Bind)
-      (isinstance x Eff)))
+      (isinstance x Embed)))

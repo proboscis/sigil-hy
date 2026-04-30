@@ -31,8 +31,8 @@
   (defn lift_n_ [self f args]
     (raise (NotImplementedError f"{(._name self)}.lift_n_ not implemented")))
 
-  (defn eff_ [self effect]
-    (raise (NotImplementedError f"{(._name self)}.eff_ not implemented")))
+  (defn embed_ [self effect]
+    (raise (NotImplementedError f"{(._name self)}.embed_ not implemented")))
 
   (defn bind_ [self inner-data cont]
     (raise (NotImplementedError f"{(._name self)}.bind_ not implemented")))

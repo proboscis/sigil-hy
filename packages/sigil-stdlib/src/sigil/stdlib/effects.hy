@@ -6,11 +6,11 @@
 ;;; — users may define their own leaf types (e.g. FetchPrice, RunQuery) and
 ;;; either subclass these algebras or write fresh ones.
 ;;;
-;;; Core is just (Pure | Lift | Bind | Eff) + the 4-method Algebra protocol.
-;;; What goes inside Eff is a domain choice.
+;;; Core is just (Pure | Lift | Bind | Embed) + the 4-method Algebra protocol.
+;;; What goes inside Embed is a domain choice.
 
 (import dataclasses [dataclass])
-(import sigil.constructors [eff])
+(import sigil.constructors [embed])
 
 ;; ── Leaf dataclasses ─────────────────────────────────────────────
 
@@ -37,21 +37,21 @@
    (Deps / Cost return defaults) or raise (Identity has no doeff runtime)."
   (annotate effect object))
 
-;; ── Convenience constructors (build on `eff`) ─────────────────────
+;; ── Convenience constructors (build on `embed`) ─────────────────────
 
-(defn apm-ask [key]
-  "Convenience: (eff (AskEff key))."
-  (eff (AskEff key)))
+(defn ask [key]
+  "Convenience: (embed (AskEff key))."
+  (embed (AskEff key)))
 
-(defn apm-prim [name #* args]
-  "Convenience: (eff (PrimEff name (tuple args)))."
-  (eff (PrimEff name (tuple args))))
+(defn prim [name #* args]
+  "Convenience: (embed (PrimEff name (tuple args)))."
+  (embed (PrimEff name (tuple args))))
 
-(defn apm-doeff [doeff-effect]
+(defn doeff [doeff-effect]
   "Wrap any doeff effect (Slog/Get/Put/Tell/Try/...) as an apm leaf, so
    the full doeff effect set is available from apm DSL.
 
    Example:
      (import doeff-core-effects.effects [Slog])
-     (apm-doeff (Slog \"starting\"))"
-  (eff (DoeffEff doeff-effect)))
+     (doeff (Slog \"starting\"))"
+  (embed (DoeffEff doeff-effect)))

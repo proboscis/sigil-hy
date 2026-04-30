@@ -8,9 +8,9 @@ for ``sigil.<subpackage>`` rather than only this package's directory.
 
 This package contains only the leaf-agnostic core:
 
-  AST nodes:    Pure | Lift | Bind | Eff
-  Constructors: pure / lift-n / bind / eff
-                + apm-list / apm-dict / apm-tuple / apm-set (Lift sugar)
+  AST nodes:    Pure | Lift | Bind | Embed
+  Constructors: pure / lift-n / bind / embed
+                + list-of / dict-of / tuple-of / set-of (Lift sugar)
   Macros:       defapm / defapmk + walk-body / extract-clauses
   Interp:       generic (interp alg ast)
   Algebra:      base class + ProductAlgebra (works on any leaf type)
@@ -27,10 +27,10 @@ import hy.importer  # noqa: F401 — activates .hy import machinery
 from pkgutil import extend_path
 __path__ = extend_path(__path__, __name__)
 
-from sigil.ast import Pure, Lift, Bind, Eff, is_node
+from sigil.ast import Pure, Lift, Bind, Embed, is_node
 from sigil.constructors import (
-    pure, lift_n, bind, eff,
-    apm_list, apm_dict, apm_tuple, apm_set,
+    pure, lift_n, bind, embed,
+    list_of, dict_of, tuple_of, set_of,
 )
 from sigil.interp import interp
 from sigil.algebras import Algebra, ProductAlgebra

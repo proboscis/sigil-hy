@@ -20,7 +20,7 @@
   (defn lift_n_ [self f args]
     (f #* args))
 
-  (defn eff_ [self effect]
+  (defn embed_ [self effect]
     (cond
       (isinstance effect AskEff)
       (do

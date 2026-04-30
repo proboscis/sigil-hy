@@ -4,7 +4,7 @@
 
 
 (defclass DepsAlgebra []
-  "Collect Ask keys reachable through Pure/Lift/Eff. Bind caps analysis."
+  "Collect Ask keys reachable through Pure/Lift/Embed. Bind caps analysis."
 
   (defn pure_ [self value]
     (frozenset))
@@ -12,7 +12,7 @@
   (defn lift_n_ [self f args]
     (.union (frozenset) #* args))
 
-  (defn eff_ [self effect]
+  (defn embed_ [self effect]
     (cond
       (isinstance effect AskEff)  (frozenset [effect.key])
       (isinstance effect PrimEff) (frozenset)
