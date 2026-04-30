@@ -3,7 +3,10 @@
 Layering:
   CORE   — leaf-agnostic applicative+monad/effect AST + Algebra protocol
   STDLIB — example leaf types (AskEff/PrimEff/DoeffEff) + their algebras
-           (Deps/Cost/Type/Identity/Execution) + run-apm + variants/control
+           (Deps/Cost/Type/Identity) + control combinators
+
+The doeff bridge (ExecutionAlgebra / run-apm) is only available when
+``apm-hy[doeff]`` is installed; otherwise those names resolve to None.
 
 Users may bypass STDLIB and define their own leaf types + algebras on top
 of CORE. STDLIB is one example domain; CORE is the abstraction.
@@ -27,10 +30,16 @@ from apm.registry import (
 from apm.stdlib import (
     Effect, AskEff, PrimEff, DoeffEff,
     apm_ask, apm_prim, apm_doeff,
-    DepsAlgebra, IdentityAlgebra, ExecutionAlgebra,
+    DepsAlgebra, IdentityAlgebra,
     CostAlgebra, TypeAlgebra,
-    run_apm, default_exec_algebra,
     apm_when, apm_if, apm_while, apm_times,
+)
+
+# ── doeff bridge (optional — None if `apm-hy[doeff]` is not installed) ─
+from apm.stdlib import (
+    ExecutionAlgebra,
+    run_apm,
+    default_exec_algebra,
 )
 
 
@@ -45,5 +54,10 @@ def identity_eval(ast, env=None):
 
 
 def to_program(ast):
-    """Convenience: interp(ExecutionAlgebra(), ast)."""
+    """Convenience: interp(ExecutionAlgebra(), ast). Requires apm-hy[doeff]."""
+    if ExecutionAlgebra is None:
+        raise ImportError(
+            "to_program requires the doeff bridge: install with "
+            "`pip install apm-hy[doeff]`"
+        )
     return interp(ExecutionAlgebra(), ast)

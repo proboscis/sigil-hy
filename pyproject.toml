@@ -9,6 +9,13 @@ description = "Free Applicative + Algebraic Effects DSL for Hy — pure-syntax m
 requires-python = ">=3.10"
 dependencies = [
     "hy>=1.2.0",
+]
+
+# Install with `pip install apm-hy[doeff]` to enable the doeff bridge
+# (ExecutionAlgebra, run-apm, DoeffEff usage). Core + non-doeff stdlib
+# (Deps / Cost / Type / Identity / control / variants) work without it.
+[project.optional-dependencies]
+doeff = [
     "doeff>=0.2.0",
     "doeff-core-effects",
 ]
@@ -27,4 +34,6 @@ testpaths = ["tests"]
 [dependency-groups]
 dev = [
     "pytest>=9.0.3",
+    "doeff>=0.2.0",
+    "doeff-core-effects",
 ]
