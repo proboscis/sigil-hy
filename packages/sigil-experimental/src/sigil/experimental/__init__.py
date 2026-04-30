@@ -15,6 +15,14 @@ and algebras directly on the ``sigil`` core.
 """
 import hy.importer  # noqa: F401 — activates .hy import machinery
 
+# Registry mechanism: global active-algebras list + defprim/defask
+# convenience macros. NOT in core because core is pure syntax — the
+# global mutable registry is one specific runtime dispatch choice.
+from sigil.experimental.registry import (
+    register_algebra, unregister_algebra,
+    clear_registry, get_active_algebras,
+)
+
 # General-purpose meta-algebra (leaf-agnostic; lives here because core
 # carries no concrete algebras).
 from sigil.experimental.algebras.product import ProductAlgebra

@@ -40,10 +40,10 @@
    active algebra's register-prim hook.
 
    (defprim fetch-news :cost 100 :type DataFrame :provenance \"polygon-v2\")"
-  `(sigil.registry._register-prim ~(str name) ~@rest))
+  `(sigil.experimental.registry._register-prim ~(str name) ~@rest))
 
 (defmacro defask [key #* rest]
   "Declare an Ask key. Same kwargs forwarding as defprim.
 
    (defask threshold :type Float :default 0.5 :cost 0)"
-  `(sigil.registry._register-ask ~(str key) ~@rest))
+  `(sigil.experimental.registry._register-ask ~(str key) ~@rest))

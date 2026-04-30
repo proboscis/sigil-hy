@@ -11,7 +11,7 @@
 (import sigil.interp              [interp])
 (import sigil.experimental.algebras.deps       [DepsAlgebra])
 (import sigil.experimental.algebras.execution  [ExecutionAlgebra])
-(import sigil.registry            [register-algebra])
+(import sigil.experimental.registry            [register-algebra])
 
 ;; Default ExecutionAlgebra used by run-sigil. Auto-registered so defprim
 ;; :impl declarations populate it through the standard registry hook.

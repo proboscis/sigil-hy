@@ -39,7 +39,3 @@ from sigil.constructors import (
 )
 from sigil.interp import interp
 from sigil.algebra import Algebra
-from sigil.registry import (
-    register_algebra, unregister_algebra,
-    clear_registry, get_active_algebras,
-)

@@ -326,11 +326,9 @@ def test_defprim_defask_open_kwargs():
     algebra picks up only the keys it cares about."""
     import hy  # noqa: F401
     from sigil import (
-        clear_registry,
-        get_active_algebras,
         interp,
-        register_algebra,
     )
+    from sigil.experimental import register_algebra, clear_registry, get_active_algebras
     from sigil.experimental import ProductAlgebra
     from sigil.experimental import (
         CostAlgebra,
@@ -345,7 +343,7 @@ def test_defprim_defask_open_kwargs():
     assert len(get_active_algebras()) == 2
 
     src = """
-(require sigil.registry [defprim defask])
+(require sigil.experimental.registry [defprim defask])
 
 (defprim fetch-news :cost 100 :provenance "polygon-v2")
 (defprim score-symbol :cost 5)
@@ -389,10 +387,9 @@ def test_type_algebra_pulls_types_from_defprim_defask():
     """defprim :type and defask :type populate TypeAlgebra's tables."""
     import hy  # noqa: F401
     from sigil import (
-        clear_registry,
         interp,
-        register_algebra,
     )
+    from sigil.experimental import register_algebra, clear_registry
     from sigil.experimental import (
         TypeAlgebra,
         prim,
@@ -403,7 +400,7 @@ def test_type_algebra_pulls_types_from_defprim_defask():
     register_algebra(talg)
 
     src = """
-(require sigil.registry [defprim defask])
+(require sigil.experimental.registry [defprim defask])
 (defprim fetch-news :type list)
 (defask threshold :type float)
 """
@@ -486,10 +483,7 @@ def test_defapmk_checked_variant_runs_arbitrary_algebras():
 def test_prim_eff_executes_via_registered_impl():
     """defprim :impl populates ExecutionAlgebra; AST with PrimEff runs."""
     import hy  # noqa: F401
-    from sigil import (
-        clear_registry,
-        register_algebra,
-    )
+    from sigil.experimental import register_algebra, clear_registry
     from sigil.experimental import (
         prim,
         default_exec_algebra,
@@ -500,7 +494,7 @@ def test_prim_eff_executes_via_registered_impl():
     default_exec_algebra.impls.clear()
 
     src = """
-(require sigil.registry [defprim])
+(require sigil.experimental.registry [defprim])
 (defprim sym-len :impl len)
 (defprim concat :impl (fn [#* xs] (.join "" xs)))
 """
@@ -517,10 +511,7 @@ def test_prim_eff_executes_via_registered_impl():
 
 def test_prim_eff_unknown_raises():
     """PrimEff without registered impl raises a clear error at execution."""
-    from sigil import (
-        clear_registry,
-        register_algebra,
-    )
+    from sigil.experimental import register_algebra, clear_registry
     from sigil.experimental import (
         prim,
         default_exec_algebra,
@@ -536,10 +527,7 @@ def test_prim_eff_unknown_raises():
 
 def test_prim_eff_isolated_exec_alg_for_test():
     """Pass a fresh ExecutionAlgebra to run-apm to stub primitives in tests."""
-    from sigil import (
-        clear_registry,
-        register_algebra,
-    )
+    from sigil.experimental import register_algebra, clear_registry
     from sigil.experimental import (
         ExecutionAlgebra,
         prim,
@@ -700,10 +688,9 @@ def test_extensible_new_algebra_no_core_change():
     (AST / constructors / macros / defprim / interp) is untouched."""
     from sigil import (
         Algebra,
-        clear_registry,
         interp,
-        register_algebra,
     )
+    from sigil.experimental import register_algebra, clear_registry
     from sigil.experimental import (
         AskEff,
         PrimEff,
@@ -742,7 +729,7 @@ def test_extensible_new_algebra_no_core_change():
 
     import hy  # noqa: F401
     src = """
-(require sigil.registry [defprim])
+(require sigil.experimental.registry [defprim])
 (defprim fetch-news :cost 100 :provenance "polygon-v2")
 (defprim local-cache :provenance "memory")
 """
