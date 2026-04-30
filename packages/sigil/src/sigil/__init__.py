@@ -1,0 +1,40 @@
+"""sigil — Free Applicative + Algebraic Effects DSL for Hy (CORE).
+
+This is a regular package whose subpackages may be provided by sibling
+distributions (e.g. ``sigil-stdlib-hy`` ships ``sigil.stdlib``). The
+``extend_path`` call below makes Python search every entry in sys.path
+for ``sigil.<subpackage>`` rather than only this package's directory.
+
+
+This package contains only the leaf-agnostic core:
+
+  AST nodes:    Pure | Lift | Bind | Eff
+  Constructors: pure / lift-n / bind / eff
+                + apm-list / apm-dict / apm-tuple / apm-set (Lift sugar)
+  Macros:       defapm / defapmk + walk-body / extract-clauses
+  Interp:       generic (interp alg ast)
+  Algebra:      base class + ProductAlgebra (works on any leaf type)
+  Registry:     register-algebra + defprim / defask (kwargs forward)
+
+The standard library (AskEff/PrimEff/DoeffEff leaf types, their algebras,
+run-apm, control combinators, defapmk variants) lives in the separate
+``sigil-stdlib-hy`` package.
+"""
+import hy.importer  # noqa: F401 — activates .hy import machinery
+
+# Extend __path__ so sibling distributions (sigil-stdlib-hy, ...) can ship
+# subpackages of `sigil` from their own paths.
+from pkgutil import extend_path
+__path__ = extend_path(__path__, __name__)
+
+from sigil.ast import Pure, Lift, Bind, Eff, is_node
+from sigil.constructors import (
+    pure, lift_n, bind, eff,
+    apm_list, apm_dict, apm_tuple, apm_set,
+)
+from sigil.interp import interp
+from sigil.algebras import Algebra, ProductAlgebra
+from sigil.registry import (
+    register_algebra, unregister_algebra,
+    clear_registry, get_active_algebras,
+)

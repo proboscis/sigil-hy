@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sigil-hy"
+version = "0.1.0"
+description = "Free Applicative + Algebraic Effects DSL for Hy — leaf-agnostic core (AST + Algebra protocol + macros + interp)."
+requires-python = ">=3.10"
+dependencies = ["hy>=1.2.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sigil"]
+artifacts = ["**/*.hy"]

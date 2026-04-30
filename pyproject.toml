@@ -1,32 +1,29 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+# sigil-hy workspace — ships two PyPI packages:
+#   sigil-hy         (packages/sigil)         — leaf-agnostic core
+#   sigil-stdlib-hy  (packages/sigil-stdlib)  — example leaves + algebras
+#                                                + run-apm / variants / control
+#
+# This root pyproject.toml is uv-workspace metadata only — no source.
+# To build & install both for development:  uv sync
 
 [project]
-name = "sigil-hy"
-version = "0.1.0"
-description = "Free Applicative + Algebraic Effects DSL for Hy — pure-syntax macros, pluggable Algebra interpreters, optional doeff backend."
+name = "sigil-hy-workspace"
+version = "0.0.0"
+description = "Workspace root for the sigil-hy project."
 requires-python = ">=3.10"
 dependencies = [
-    "hy>=1.2.0",
+    "sigil-hy",
+    "sigil-stdlib-hy",
 ]
 
-# Install with `pip install sigil-hy[doeff]` to enable the doeff bridge
-# (ExecutionAlgebra, run-apm, DoeffEff usage). Core + non-doeff stdlib
-# (Deps / Cost / Type / Identity / control / variants) work without it.
-[project.optional-dependencies]
-doeff = [
-    "doeff>=0.2.0",
-    "doeff-core-effects",
-]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/sigil"]
-artifacts = ["**/*.hy"]
+[tool.uv.workspace]
+members = ["packages/sigil", "packages/sigil-stdlib"]
 
 [tool.uv.sources]
-doeff             = { path = "../doeff",                                editable = true }
-doeff-core-effects = { path = "../doeff/packages/doeff-core-effects",   editable = true }
+sigil-hy           = { workspace = true }
+sigil-stdlib-hy    = { workspace = true }
+doeff              = { path = "../doeff",                              editable = true }
+doeff-core-effects = { path = "../doeff/packages/doeff-core-effects",  editable = true }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
