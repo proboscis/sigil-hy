@@ -10,7 +10,7 @@
 ;;; What goes inside Eff is a domain choice.
 
 (import dataclasses [dataclass])
-(import prism.constructors [eff])
+(import sigil.constructors [eff])
 
 ;; ── Leaf dataclasses ─────────────────────────────────────────────
 

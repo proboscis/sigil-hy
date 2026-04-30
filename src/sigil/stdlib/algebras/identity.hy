@@ -3,7 +3,7 @@
 ;;; Looks up Ask keys in a plain dict env. PrimEff is resolved via `impls`
 ;;; (populated either at construction or by defprim :impl fn registration).
 
-(import prism.stdlib.effects [AskEff PrimEff])
+(import sigil.stdlib.effects [AskEff PrimEff])
 
 
 (defclass IdentityAlgebra []
@@ -39,7 +39,7 @@
       (raise (TypeError f"IdentityAlgebra: unknown effect {(type effect)}"))))
 
   (defn bind_ [self inner-data cont]
-    (import prism.interp [interp])
+    (import sigil.interp [interp])
     (interp self (cont inner-data)))
 
   (defn register-prim [self name #** kwargs]

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "prism-hy"
+name = "sigil-hy"
 version = "0.1.0"
 description = "Free Applicative + Algebraic Effects DSL for Hy — pure-syntax macros, pluggable Algebra interpreters, optional doeff backend."
 requires-python = ">=3.10"
@@ -11,7 +11,7 @@ dependencies = [
     "hy>=1.2.0",
 ]
 
-# Install with `pip install prism-hy[doeff]` to enable the doeff bridge
+# Install with `pip install sigil-hy[doeff]` to enable the doeff bridge
 # (ExecutionAlgebra, run-apm, DoeffEff usage). Core + non-doeff stdlib
 # (Deps / Cost / Type / Identity / control / variants) work without it.
 [project.optional-dependencies]
@@ -21,7 +21,7 @@ doeff = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/prism"]
+packages = ["src/sigil"]
 artifacts = ["**/*.hy"]
 
 [tool.uv.sources]

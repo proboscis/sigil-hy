@@ -10,11 +10,11 @@
 ;;;   3. Emit a function that constructs the AST and runs whatever Algebra
 ;;;      checks the variant cares about, then returns the AST.
 ;;;
-;;; (require prism.variants [defapmk-typed defapmk-checked])
+;;; (require sigil.variants [defapmk-typed defapmk-checked])
 
-(import prism.macros [walk-body extract-clauses])
-(import prism.stdlib.algebras.type_alg [TypeAlgebra])
-(import prism.interp [interp])
+(import sigil.macros [walk-body extract-clauses])
+(import sigil.stdlib.algebras.type_alg [TypeAlgebra])
+(import sigil.interp [interp])
 
 
 (defmacro defapmk-typed [name params #* body]
@@ -35,8 +35,8 @@
   (when (= (len real-body) 0)
     (raise (SyntaxError f"defapmk-typed {name}: body required after clauses")))
   `(do
-     (import prism.interp                  [interp :as _apm-interp])
-     (import prism.stdlib.algebras.type_alg [TypeAlgebra :as _ApmTypeAlgebra])
+     (import sigil.interp                  [interp :as _apm-interp])
+     (import sigil.stdlib.algebras.type_alg [TypeAlgebra :as _ApmTypeAlgebra])
      (defn ~name ~params
        (setv _ast (do ~@(walk-body real-body)))
        (_apm-interp (_ApmTypeAlgebra) _ast)
@@ -61,7 +61,7 @@
     (raise (SyntaxError f"defapmk-checked {name}: :check clause is required")))
   (setv checks (get clauses "check"))
   `(do
-     (import prism.interp [interp :as _apm-interp])
+     (import sigil.interp [interp :as _apm-interp])
      (defn ~name ~params
        (setv _ast (do ~@(walk-body real-body)))
        (for [_alg ~checks] (_apm-interp _alg _ast))
