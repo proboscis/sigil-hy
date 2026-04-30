@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "apm-hy"
+version = "0.1.0"
+description = "Free Applicative + Algebraic Effects DSL for Hy — pure-syntax macros, pluggable Algebra interpreters, optional doeff backend."
+requires-python = ">=3.10"
+dependencies = [
+    "hy>=1.2.0",
+    "doeff>=0.2.0",
+    "doeff-core-effects",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/apm"]
+artifacts = ["**/*.hy"]
+
+[tool.uv.sources]
+doeff             = { path = "../doeff",                                editable = true }
+doeff-core-effects = { path = "../doeff/packages/doeff-core-effects",   editable = true }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
