@@ -1,6 +1,6 @@
 # sigil-hy workspace — ships two PyPI packages:
 #   sigil-hy         (packages/sigil)         — leaf-agnostic core
-#   sigil-stdlib-hy  (packages/sigil-stdlib)  — example leaves + algebras
+#   sigil-experimental-hy  (packages/sigil-experimental)  — example leaves + algebras
 #                                                + run-apm / variants / control
 #
 # This root pyproject.toml is uv-workspace metadata only — no source.
@@ -13,15 +13,15 @@ description = "Workspace root for the sigil-hy project."
 requires-python = ">=3.10"
 dependencies = [
     "sigil-hy",
-    "sigil-stdlib-hy",
+    "sigil-experimental-hy",
 ]
 
 [tool.uv.workspace]
-members = ["packages/sigil", "packages/sigil-stdlib"]
+members = ["packages/sigil", "packages/sigil-experimental"]
 
 [tool.uv.sources]
 sigil-hy           = { workspace = true }
-sigil-stdlib-hy    = { workspace = true }
+sigil-experimental-hy    = { workspace = true }
 doeff              = { path = "../doeff",                              editable = true }
 doeff-core-effects = { path = "../doeff/packages/doeff-core-effects",  editable = true }
 

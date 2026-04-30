@@ -5,7 +5,7 @@
 ;;;   - ProductAlgebra: zip N algebras into one walk (works on any leaves)
 ;;;
 ;;; Leaf-aware bundled algebras (Deps, Cost, Type, Execution, Identity) live
-;;; under sigil.stdlib.algebras — they assume AskEff/PrimEff.
+;;; under sigil.experimental.algebras — they assume AskEff/PrimEff.
 
 
 (defclass Algebra []

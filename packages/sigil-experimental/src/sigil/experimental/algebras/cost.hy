@@ -4,7 +4,7 @@
 ;;; and (defask ... :cost X). Bind returns inf — opaque continuation past
 ;;; the bind cannot be cost-bounded.
 
-(import sigil.stdlib.effects [AskEff PrimEff DoeffEff])
+(import sigil.experimental.effects [AskEff PrimEff DoeffEff])
 
 
 (defclass CostAlgebra []

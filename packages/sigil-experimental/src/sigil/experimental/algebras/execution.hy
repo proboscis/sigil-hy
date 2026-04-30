@@ -7,7 +7,7 @@
 
 (import doeff [Ask Pure])
 (import doeff [do :as _doeff-do])
-(import sigil.stdlib.effects [AskEff PrimEff DoeffEff])
+(import sigil.experimental.effects [AskEff PrimEff DoeffEff])
 
 
 (defclass ExecutionAlgebra []

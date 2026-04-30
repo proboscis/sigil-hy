@@ -1,4 +1,4 @@
-"""Tests for sigil + sigil.stdlib — Free Applicative over Free Monad/Effect DSL.
+"""Tests for sigil + sigil.experimental — Free Applicative over Free Monad/Effect DSL.
 
 defapm / defapmk emit AST nodes (Pure / Lift / Bind / Embed). Applicative /
 monad/effect semantics live in Algebra implementations.
@@ -7,7 +7,7 @@ import hy  # noqa: F401 — activates Hy import hook
 import pytest
 
 import sigil  # noqa: F401 — registers .hyk/.hyp loaders
-import sigil.stdlib  # noqa: F401
+import sigil.experimental  # noqa: F401
 
 # ── core ──────────────────────────────────────────────────────────
 from sigil import (
@@ -21,7 +21,7 @@ from sigil import (
 )
 
 # ── stdlib ────────────────────────────────────────────────────────
-from sigil.stdlib import (
+from sigil.experimental import (
     ask,
     deps,
     identity_eval,
@@ -108,7 +108,7 @@ def test_macro_defapm_constant():
     mod = _hy_eval(
         """
 (require sigil.macros [defapm])
-(import sigil.stdlib [ask])
+(import sigil.experimental [ask])
 (defapm threshold (ask "threshold"))
 """
     )
@@ -135,7 +135,7 @@ def test_macro_defapmk_list_literal():
     mod = _hy_eval(
         """
 (require sigil.macros [defapmk])
-(import sigil [list-of pure]) (import sigil.stdlib [ask])
+(import sigil [list-of pure]) (import sigil.experimental [ask])
 (defapmk pair []
   [(ask "x") (ask "y")])
 """
@@ -150,7 +150,7 @@ def test_macro_defapmk_list_mixed():
     mod = _hy_eval(
         """
 (require sigil.macros [defapmk])
-(import sigil [list-of pure]) (import sigil.stdlib [ask])
+(import sigil [list-of pure]) (import sigil.experimental [ask])
 (defapmk mixed []
   [(ask "a") 99 "lit"])
 """
@@ -164,7 +164,7 @@ def test_macro_defapmk_dict_literal():
     mod = _hy_eval(
         """
 (require sigil.macros [defapmk])
-(import sigil [dict-of pure]) (import sigil.stdlib [ask])
+(import sigil [dict-of pure]) (import sigil.experimental [ask])
 (defapmk config []
   {"thr"  (ask "threshold")
    "max"  100
@@ -181,7 +181,7 @@ def test_macro_defapmk_tuple_literal():
     mod = _hy_eval(
         """
 (require sigil.macros [defapmk])
-(import sigil [tuple-of pure]) (import sigil.stdlib [ask])
+(import sigil [tuple-of pure]) (import sigil.experimental [ask])
 (defapmk pair-tuple []
   #((ask "p") (ask "q")))
 """
@@ -195,7 +195,7 @@ def test_macro_defapmk_set_literal():
     mod = _hy_eval(
         """
 (require sigil.macros [defapmk])
-(import sigil [set-of pure]) (import sigil.stdlib [ask])
+(import sigil [set-of pure]) (import sigil.experimental [ask])
 (defapmk syms []
   #{(ask "a") (ask "b")})
 """
@@ -209,7 +209,7 @@ def test_macro_defapmk_with_args():
     mod = _hy_eval(
         """
 (require sigil.macros [defapm defapmk])
-(import sigil [lift-n pure]) (import sigil.stdlib [ask])
+(import sigil [lift-n pure]) (import sigil.experimental [ask])
 (import operator)
 (defapm thr (ask "thr"))
 (defapmk score [data]
@@ -225,7 +225,7 @@ def test_macro_defapmk_nested_structural():
     mod = _hy_eval(
         """
 (require sigil.macros [defapmk])
-(import sigil [list-of dict-of pure]) (import sigil.stdlib [ask])
+(import sigil [list-of dict-of pure]) (import sigil.experimental [ask])
 (defapmk nested []
   {"items" [(ask "a") (ask "b")]
    "count" 2})
@@ -280,7 +280,7 @@ def test_algebra_interp_basic():
         ProductAlgebra,
         interp,
     )
-    from sigil.stdlib import (
+    from sigil.experimental import (
         CostAlgebra,
         DepsAlgebra,
         ExecutionAlgebra,
@@ -307,7 +307,7 @@ def test_product_algebra_one_walk():
         ProductAlgebra,
         interp,
     )
-    from sigil.stdlib import (
+    from sigil.experimental import (
         CostAlgebra,
         DepsAlgebra,
     )
@@ -332,7 +332,7 @@ def test_defprim_defask_open_kwargs():
         interp,
         register_algebra,
     )
-    from sigil.stdlib import (
+    from sigil.experimental import (
         CostAlgebra,
         DepsAlgebra,
     )
@@ -362,7 +362,7 @@ def test_defprim_defask_open_kwargs():
 def test_type_algebra_infers_return_type():
     """TypeAlgebra reads f's return annotation as the lift_n result type."""
     from sigil import interp
-    from sigil.stdlib import TypeAlgebra
+    from sigil.experimental import TypeAlgebra
 
     def add(x: int, y: int) -> int:
         return x + y
@@ -375,7 +375,7 @@ def test_type_algebra_raises_on_mismatch():
     """lift_n raises TypeError when an arg type is incompatible with f's
     parameter annotation."""
     from sigil import interp
-    from sigil.stdlib import TypeAlgebra
+    from sigil.experimental import TypeAlgebra
 
     def expect_str(s: str) -> int:
         return len(s)
@@ -393,7 +393,7 @@ def test_type_algebra_pulls_types_from_defprim_defask():
         interp,
         register_algebra,
     )
-    from sigil.stdlib import (
+    from sigil.experimental import (
         TypeAlgebra,
         prim,
     )
@@ -420,7 +420,7 @@ def test_type_algebra_pulls_types_from_defprim_defask():
 def test_type_algebra_strict_off_only_infers():
     """strict=False means lift_n won't raise on mismatch — only infer."""
     from sigil import interp
-    from sigil.stdlib import TypeAlgebra
+    from sigil.experimental import TypeAlgebra
 
     def expect_str(s: str) -> int:
         return len(s)
@@ -435,7 +435,7 @@ def test_defapmk_typed_variant_catches_type_mismatch():
     mod = _hy_eval(
         """
 (require sigil.macros   [defapmk])
-(require sigil.stdlib.variants [defapmk-typed])
+(require sigil.experimental.variants [defapmk-typed])
 (import  sigil [pure lift-n])
 
 (defn add-ints [#^ int x #^ int y] (+ x y))
@@ -464,8 +464,8 @@ def test_defapmk_checked_variant_runs_arbitrary_algebras():
     mod = _hy_eval(
         """
 (require sigil.macros   [defapmk])
-(require sigil.stdlib.variants [defapmk-checked])
-(import  sigil [pure lift-n]) (import sigil.stdlib [DepsAlgebra TypeAlgebra])
+(require sigil.experimental.variants [defapmk-checked])
+(import  sigil [pure lift-n]) (import sigil.experimental [DepsAlgebra TypeAlgebra])
 
 (defn mul-floats [#^ float x #^ float y] (* x y))
 
@@ -490,7 +490,7 @@ def test_prim_eff_executes_via_registered_impl():
         clear_registry,
         register_algebra,
     )
-    from sigil.stdlib import (
+    from sigil.experimental import (
         prim,
         default_exec_algebra,
     )
@@ -521,7 +521,7 @@ def test_prim_eff_unknown_raises():
         clear_registry,
         register_algebra,
     )
-    from sigil.stdlib import (
+    from sigil.experimental import (
         prim,
         default_exec_algebra,
     )
@@ -540,7 +540,7 @@ def test_prim_eff_isolated_exec_alg_for_test():
         clear_registry,
         register_algebra,
     )
-    from sigil.stdlib import (
+    from sigil.experimental import (
         ExecutionAlgebra,
         prim,
         default_exec_algebra,
@@ -566,7 +566,7 @@ def test_doeff_state_through_sigil():
     from doeff_core_effects.handlers import state
 
     from sigil import bind, pure
-    from sigil.stdlib import doeff
+    from sigil.experimental import doeff
 
     # Read counter, write counter+1, return new value
     ast = bind(
@@ -585,7 +585,7 @@ def test_doeff_eff_in_lift_n():
     from doeff_core_effects.effects import Get
     from doeff_core_effects.handlers import state
 
-    from sigil.stdlib import doeff
+    from sigil.experimental import doeff
 
     ast = lift_n(
         lambda x, y: x + y,
@@ -604,7 +604,7 @@ def test_while_of_with_doeff_state():
     from doeff_core_effects.handlers import state
 
     from sigil import bind, pure
-    from sigil.stdlib import doeff, while_of
+    from sigil.experimental import doeff, while_of
 
     ast = while_of(
         bind(doeff(Get("n")), lambda n: pure(n > 0)),
@@ -633,7 +633,7 @@ def test_while_of_long_loop_does_not_blow_stack():
     from doeff_core_effects.handlers import state
 
     from sigil import bind, pure
-    from sigil.stdlib import doeff, while_of
+    from sigil.experimental import doeff, while_of
 
     sys.setrecursionlimit(10000)
     ast = while_of(
@@ -704,7 +704,7 @@ def test_extensible_new_algebra_no_core_change():
         interp,
         register_algebra,
     )
-    from sigil.stdlib import (
+    from sigil.experimental import (
         AskEff,
         PrimEff,
     )
@@ -754,7 +754,7 @@ def test_extensible_new_algebra_no_core_change():
     }
 
     # Build an AST that uses the registered primitives
-    from sigil.stdlib import prim
+    from sigil.experimental import prim
     ast = lift_n(
         lambda a, b, c: (a, b, c),
         prim("fetch-news", "BTC"),

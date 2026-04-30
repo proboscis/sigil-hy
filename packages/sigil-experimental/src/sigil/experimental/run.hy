@@ -9,8 +9,8 @@
 (import doeff-core-effects.scheduler [scheduled])
 
 (import sigil.interp              [interp])
-(import sigil.stdlib.algebras.deps       [DepsAlgebra])
-(import sigil.stdlib.algebras.execution  [ExecutionAlgebra])
+(import sigil.experimental.algebras.deps       [DepsAlgebra])
+(import sigil.experimental.algebras.execution  [ExecutionAlgebra])
 (import sigil.registry            [register-algebra])
 
 ;; Default ExecutionAlgebra used by run-sigil. Auto-registered so defprim

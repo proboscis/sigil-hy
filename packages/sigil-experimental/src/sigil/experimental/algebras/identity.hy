@@ -3,7 +3,7 @@
 ;;; Looks up Ask keys in a plain dict env. PrimEff is resolved via `impls`
 ;;; (populated either at construction or by defprim :impl fn registration).
 
-(import sigil.stdlib.effects [AskEff PrimEff])
+(import sigil.experimental.effects [AskEff PrimEff])
 
 
 (defclass IdentityAlgebra []

@@ -13,7 +13,7 @@
 ;;; (require sigil.variants [defapmk-typed defapmk-checked])
 
 (import sigil.macros [walk-body extract-clauses])
-(import sigil.stdlib.algebras.type_alg [TypeAlgebra])
+(import sigil.experimental.algebras.type_alg [TypeAlgebra])
 (import sigil.interp [interp])
 
 
@@ -36,7 +36,7 @@
     (raise (SyntaxError f"defapmk-typed {name}: body required after clauses")))
   `(do
      (import sigil.interp                  [interp :as _apm-interp])
-     (import sigil.stdlib.algebras.type_alg [TypeAlgebra :as _ApmTypeAlgebra])
+     (import sigil.experimental.algebras.type_alg [TypeAlgebra :as _ApmTypeAlgebra])
      (defn ~name ~params
        (setv _ast (do ~@(walk-body real-body)))
        (_apm-interp (_ApmTypeAlgebra) _ast)

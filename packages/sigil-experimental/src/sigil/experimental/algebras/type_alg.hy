@@ -12,7 +12,7 @@
 
 (import inspect)
 (import typing)
-(import sigil.stdlib.effects [AskEff PrimEff DoeffEff])
+(import sigil.experimental.effects [AskEff PrimEff DoeffEff])
 
 
 (defn _origin [t]

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "sigil-stdlib-hy"
+name = "sigil-experimental-hy"
 version = "0.1.0"
 description = "Standard library for sigil-hy: AskEff/PrimEff/DoeffEff leaf types, Deps/Cost/Type/Identity/Execution algebras, run-apm, control combinators, defapmk variants."
 requires-python = ">=3.10"
@@ -19,8 +19,8 @@ doeff = [
 ]
 
 [tool.hatch.build.targets.wheel]
-# Ship only sigil/stdlib/ — the parent sigil/ directory is provided by the
+# Ship only sigil/experimental/ — the parent sigil/ directory is provided by the
 # sigil-hy core package. Both wheels coexist in site-packages/sigil/.
-packages = ["src/sigil/stdlib"]
+packages = ["src/sigil/experimental"]
 sources = ["src"]
 artifacts = ["**/*.hy"]
